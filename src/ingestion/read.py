@@ -48,7 +48,7 @@ def read_s3_df(bucket_name, file_key):
         else:
             raise
 
-def get_s3_dcm(S3_CLIENT, bucket, dirpath, patient_id):
+def get_s3_dcm(bucket, dirpath, patient_id):
     """Read DICOM from S3"""
     obj = S3_CLIENT.get_object(Bucket=bucket,
                                Key=dirpath + '/%s.dcm' % patient_id)
