@@ -34,9 +34,9 @@ image_df.head()
 
 # Read label datasets
 class_label_df = ingest.read_s3_df(
-    bucket_name=S3_BUCKET_NAME, file_key=S3_CLASS_INFO_KEY)
+    bucket=S3_BUCKET_NAME, file_key=S3_CLASS_INFO_KEY)
 train_box_df = ingest.read_s3_df(
-    bucket_name=S3_BUCKET_NAME, file_key=S3_TRAIN_BOX_KEY)
+    bucket=S3_BUCKET_NAME, file_key=S3_TRAIN_BOX_KEY)
 print(class_label_df.iloc[:10, ])
 print(train_box_df.iloc[:10, ])
 
@@ -46,9 +46,10 @@ print(print(patient_0))
 print(patient_0['patientId'])
 
 # Inspect DICOM metadata
-dcm_data = ingest.get_s3_dcm(bucket=S3_BUCKET_NAME,
-                             dirpath=S3_STAGE1_TRAIN_IMAGE_DIR,
-                             patient_id=patient_0['patientId'])
+dcm_data = ingest.get_s3_dcm(
+    bucket=S3_BUCKET_NAME,
+    key=S3_STAGE1_TRAIN_IMAGE_DIR + "/" + patient_0['patientId'] + ".dcm")
+
 print(dcm_data)
 im = dcm_data.pixel_array
 print(type(im))

@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+"""Initial model with Mask R-CNN.
+
+References:
+    Intro to deep learning for medical imaging by MD.ai
+    - https://github.com/mdai/ml-lessons/blob/master/lesson3-rsna-pneumonia-detection-mdai-client-lib.ipynb
+    - Retrieved 2018-09-20
+    - Licensed under the Apache License, Version 2.0
+"""
+
 import os
 import sys
 import random
@@ -11,14 +21,14 @@ import matplotlib.pyplot as plt
 import src.ingestion as ingest
 
 # Import Mask RCNN submodule
+# TODO: Find better way to import a local library (when library interally imports itself)
+sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
 from libs.Mask_RCNN.mrcnn.config import Config
 import libs.Mask_RCNN.mrcnn.model as modellib
 from libs.Mask_RCNN.mrcnn import visualize
 from libs.Mask_RCNN.mrcnn.model import log
 
 # Import Mask CNN helper classes
-# TODO: Find better way to import a local library (when library interally imports itself)
-sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
 from src.analysis.mask_rcnn import DetectorDataset
 
 # Read global config
@@ -40,7 +50,7 @@ DICOM_HEIGHT = 1024
 
 # Create annotation dict
 train_box_df = ingest.read_s3_df(
-    bucket_name=S3_BUCKET_NAME, file_key=S3_TRAIN_BOX_KEY)
+    bucket=S3_BUCKET_NAME, file_key=S3_TRAIN_BOX_KEY)
 annotation_dict = ingest.parse_training_labels(
     train_box_df=train_box_df,
     train_image_dirpath=S3_STAGE1_TRAIN_IMAGE_DIR)
@@ -48,7 +58,7 @@ print(annotation_dict['0004cfab-14fd-4e49-80ba-63a80b6bddd6'])
 print(annotation_dict['00436515-870c-4b36-a041-de91049b9ab4'])
 
 # Get list of images
-image_df = ingest.parse_dicom_image_list(bucket_name=S3_BUCKET_NAME)  # slow
+image_df = ingest.parse_dicom_image_list(bucket=S3_BUCKET_NAME)  # slow
 image_df.head()
 
 # Take initial subset of 100 patients

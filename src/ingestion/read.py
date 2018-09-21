@@ -12,20 +12,20 @@ import pandas as pd
 S3_CLIENT = boto3.client('s3')      # low-level functional API
 S3_RESOURCE = boto3.resource('s3')  # higher-level OOO API
 
-def list_bucket_contents(bucket_name):
+def list_bucket_contents(bucket):
     """List all contents from all buckets (using default configuration)."""
     obj_paths = []
     s3 = boto3.resource('s3')
-    for obj in s3.Bucket(name=bucket_name).objects.all():
-        obj_paths.append(os.path.join(obj.bucket_name, obj.key))
+    for obj in s3.Bucket(name=bucket).objects.all():
+        obj_paths.append(os.path.join(obj.bucket, obj.key))
     return obj_paths
 
-def parse_dicom_image_list(bucket_name, verbose=False):
+def parse_dicom_image_list(bucket, verbose=False):
     """Get list of DICOMs from S3 bucket and parse train/test and patientId."""
     # TODO: Not efficient. Find way not to do this in a loop.
     image_df = pd.DataFrame(columns=['path', 'subdir', 'patient_id'])
-    for obj in S3_RESOURCE.Bucket(name=bucket_name).objects.all():
-        path = os.path.join(obj.bucket_name, obj.key)
+    for obj in S3_RESOURCE.Bucket(name=bucket).objects.all():
+        path = os.path.join(obj.bucket, obj.key)
         if path.endswith('.dcm'):
             if verbose:
                 print(path)
@@ -37,10 +37,10 @@ def parse_dicom_image_list(bucket_name, verbose=False):
                                        ignore_index=True)
     return image_df
 
-def read_s3_df(bucket_name, file_key):
+def read_s3_df(bucket, file_key):
     """Read CSV from S3 and return a pandas dataframe."""
     try:
-        obj = S3_CLIENT.get_object(Bucket=bucket_name, Key=file_key)
+        obj = S3_CLIENT.get_object(Bucket=bucket, Key=file_key)
         return pd.read_csv(obj['Body'])
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
@@ -48,15 +48,9 @@ def read_s3_df(bucket_name, file_key):
         else:
             raise
 
-def get_s3_dcm(bucket, key):
+def get_s3_dcm(bucket, file_key):
     """Read DICOM from S3"""
-    obj = S3_CLIENT.get_object(Bucket=bucket, Key=key)
-    return pydicom.read_file(BytesIO(obj['Body'].read()))
-
-def get_s3_dcm(bucket, dirpath, patient_id):
-    """Read DICOM from S3"""
-    obj = S3_CLIENT.get_object(Bucket=bucket,
-                               Key=dirpath + '/%s.dcm' % patient_id)
+    obj = S3_CLIENT.get_object(Bucket=bucket, Key=file_key)
     return pydicom.read_file(BytesIO(obj['Body'].read()))
 
 def parse_training_labels(train_box_df, train_image_dirpath):
