@@ -38,7 +38,7 @@ def parse_dicom_image_list(bucket_name, verbose=False):
     return image_df
 
 def read_s3_df(bucket_name, file_key):
-    """Read CSV from S3 adn return a pandas dataframe."""
+    """Read CSV from S3 and return a pandas dataframe."""
     try:
         obj = S3_CLIENT.get_object(Bucket=bucket_name, Key=file_key)
         return pd.read_csv(obj['Body'])
@@ -47,6 +47,11 @@ def read_s3_df(bucket_name, file_key):
             print("The object does not exist.")
         else:
             raise
+
+def get_s3_dcm(bucket, key):
+    """Read DICOM from S3"""
+    obj = S3_CLIENT.get_object(Bucket=bucket, Key=key)
+    return pydicom.read_file(BytesIO(obj['Body'].read()))
 
 def get_s3_dcm(bucket, dirpath, patient_id):
     """Read DICOM from S3"""
@@ -87,7 +92,7 @@ def parse_training_labels(train_box_df, train_image_dirpath):
         pid = row['patientId']
         if pid not in parsed:
             parsed[pid] = {
-                'dicom_s3_key': train_image_dirpath + '%s.dcm' % pid,
+                'dicom_s3_key': train_image_dirpath + '/%s.dcm' % pid,
                 'label': row['Target'],
                 'boxes': []}
 
