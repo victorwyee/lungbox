@@ -14,7 +14,8 @@ class GlobalConfig:
         'S3_CLASS_INFO_PATH': 's3://lungbox/data/raw/stage_1_detailed_class_info.csv',
         'S3_TRAIN_BOX_PATH': 's3://lungbox/data/raw/stage_1_train_labels.csv',
         'S3_STAGE1_TRAIN_IMAGE_DIR': 'data/raw/stage_1_train_images',
-        'S3_STAGE1_TEST_IMAGE_DIR': 'data/raw/stage_1_test_images'
+        'S3_STAGE1_TEST_IMAGE_DIR': 'data/raw/stage_1_test_images',
+        'MODEL_DIR': '/projects/lungbox/models'
     }
     __setters = ['AWS_ACCESS_KEY']
 
