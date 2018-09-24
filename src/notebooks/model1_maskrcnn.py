@@ -12,29 +12,30 @@ import os
 import sys
 import random
 import numpy as np
-import pandas as pd
-import pydicom
-import cv2
+import time
+
+# For image reading & manipulation
 from imgaug import augmenters as iaa
-from tqdm import tqdm  # progress bar
 import matplotlib.pyplot as plt
 import src.ingestion as ingest
 
-# Import Mask RCNN submodule
-# TODO: Find better way to import a local library (when library interally imports itself)
+# Import local matterport/Mask_RCNN lib
+# TODO: Find better way to import a local library
 sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
 from libs.Mask_RCNN.mrcnn.config import Config
 import libs.Mask_RCNN.mrcnn.model as modellib
 from libs.Mask_RCNN.mrcnn import visualize
-from libs.Mask_RCNN.mrcnn.model import log
 
 # Import Mask CNN helper classes
 from src.analysis.mask_rcnn import DetectorDataset
 
+# Start streamlit notebook
+import streamlit as st
+
+# ---- CONFIG ------------------------------------------------------------------
+
 # Read global config
 from configs.globals import GlobalConfig
-# not properly picked up from system config
-os.environ['AWS_REGION'] = GlobalConfig.get('AWS_REGION')
 S3_BUCKET_NAME = GlobalConfig.get('S3_BUCKET_NAME')
 S3_CLASS_INFO_KEY = GlobalConfig.get('S3_CLASS_INFO_KEY')
 S3_TRAIN_BOX_KEY = GlobalConfig.get('S3_TRAIN_BOX_KEY')
@@ -44,9 +45,44 @@ S3_STAGE1_TRAIN_IMAGE_DIR = GlobalConfig.get('S3_STAGE1_TRAIN_IMAGE_DIR')
 S3_STAGE1_TEST_IMAGE_DIR = GlobalConfig.get('S3_STAGE1_TEST_IMAGE_DIR')
 MODEL_DIR = GlobalConfig.get('MODEL_DIR')
 
+# Set manually since not properly picked up from system config
+os.environ['AWS_REGION'] = GlobalConfig.get('AWS_REGION')
+
 # Set other constants
 DICOM_WIDTH = 1024
 DICOM_HEIGHT = 1024
+RANDOM_SEED = 42
+random.seed(RANDOM_SEED)
+
+# ---- OVERVIEW ----------------------------------------------------------------
+
+st.markdown('# Model 1: Mask R-CNN')
+st.markdown('## Overview')
+st.markdown(
+    """
+    This is a first pass at a bounding box predictor using
+    [matterport\'s Mask R-CNN implementation](https://github.com/matterport/Mask_RCNN).
+    """
+)
+
+# ---- DATA --------------------------------------------------------------------
+
+st.markdown('## Data')
+st.markdown(
+    """
+    * RSNA 2018 Challenge dataset
+        * Subset of NIH CXR14 dataset of >100K classified x-rays
+        * Training Data: 30K x-rays
+        * Test Data: 4500 x-rays
+        * 0-4 bounding boxes
+        * Expert annotation by board-certified radiologists
+            - Not perfect
+    * 31% positive, 29% negative/normal, 40% negative/abnormal
+    * Standard DICOM format
+        * Already windowed & leveled
+        * Already downsampled from 2000x2000 to 1024x1024
+    """
+)
 
 # Create annotation dict
 train_box_df = ingest.read_s3_df(
@@ -59,16 +95,48 @@ print(annotation_dict['00436515-870c-4b36-a041-de91049b9ab4'])
 
 # Get list of images
 image_df = ingest.parse_dicom_image_list(bucket=S3_BUCKET_NAME)  # slow
-image_df.head()
+print(image_df.head())
 
-# Take initial subset of 100 patients
-patient_id_subset = list(
-    image_df[image_df['subdir'] == 'train']['patient_id'][:100])
+# Take initial subset of 1000 patients
+st.markdown(
+    """
+    For our first iteration, we will use a small subset of 1000 images,
+    with an 80/20 training/validation split.
+    """
+)
+patient_id_subset = sorted(list(
+    image_df[image_df['subdir'] == 'train']['patient_id'])[:1000])
+
+# Split dataset for training and validation
+sorted(patient_id_subset)
+random.shuffle(patient_id_subset)
+
+validation_split = 0.2
+split_index = int((1 - validation_split) * len(patient_id_subset))
+
+patient_id_train = patient_id_subset[:split_index]
+patient_id_valid = patient_id_subset[split_index:]
+
+print(len(patient_id_train), len(patient_id_valid))
+
+# ---- MODEL -------------------------------------------------------------------
+
+st.markdown('## Model\n')
+st.markdown(' ')
+st.markdown(
+    """\n\n
+    * FPN + ResNet50
+        * (He et al. (2017). Mask R-CNN.)[https://arxiv.org/abs/1703.06870]
+    * Existing implementations
+        * https://github.com/facebookresearch/Detectron
+        * https://github.com/matterport/Mask_RCNN
+    """
+)
 
 # Non-optimal initial Mask R-CNN config
 class DetectorConfig(Config):
-    """Configuration for training pneumonia detection on the RSNA pneumonia dataset.
-    Overrides values in the base Config class.
+    """Configuration for training pneumonia detection on the RSNA pneumonia
+    dataset. Overrides values in the base Config class.
     """
 
     # Give the configuration a recognizable name
@@ -79,7 +147,7 @@ class DetectorConfig(Config):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 8
 
-    BACKBONE = 'resnet50'
+    BACKBONE = 'resnet101'
 
     NUM_CLASSES = 2  # background + 1 pneumonia classes
 
@@ -94,22 +162,17 @@ class DetectorConfig(Config):
 
     STEPS_PER_EPOCH = 100
 
+    def get_attrs(self):
+        """Return all configs in one string."""
+        return '\n'.join(
+            "{:30} {}".format(a, getattr(self, a)) for a in dir(self)
+            if not a.startswith("__")
+            and not callable(getattr(self, a)))
 
+
+st.markdown('### Model Configuration')
 MASKRCNN_CONFIG = DetectorConfig()
-MASKRCNN_CONFIG.display()
-
-# Split dataset for training and validation
-sorted(patient_id_subset)
-random.seed(42)
-random.shuffle(patient_id_subset)
-
-validation_split = 0.1
-split_index = int((1 - validation_split) * len(patient_id_subset))
-
-patient_id_train = patient_id_subset[:split_index]
-patient_id_valid = patient_id_subset[split_index:]
-
-print(len(patient_id_train), len(patient_id_valid))
+st.text(MASKRCNN_CONFIG.get_attrs())
 
 # Prepare training and validation sets.
 dataset_train = DetectorDataset(
@@ -128,37 +191,40 @@ dataset_train.prepare()
 dataset_valid.prepare()
 assert len(dataset_train.image_ids) == len(patient_id_train)
 assert len(dataset_valid.image_ids) == len(patient_id_valid)
-print(dataset_train.image_info[:5])
 
-# Inspect a sample
-image_id = 2
-print(annotation_dict['035789b1-3736-405d-9910-f8f23c62ae9f'])
+st.markdown('### Example Training Labels')
+st.json(dataset_train.image_info[:5])
+
+# Inspect a single instance
+st.markdown('### Example Instance')
+image_id = 88 # random.randint(0, 100)
 image_fp = dataset_train.image_reference(image_id)
-print(dataset_train.get_image_reference(image_id))
-print(dataset_train.get_image_annotation(image_id))
-
-# Visualize a sample
-image_fp = dataset_train.image_reference(image_id=image_id)
 image = dataset_train.load_image(image_id=image_id)
 mask, class_ids = dataset_train.load_mask(image_id=image_id)
-print(class_ids)
-print(image.shape)
+st.markdown(dataset_train.get_image_reference(image_id))
+st.text(dataset_train.get_image_annotation(image_id))
+st.text('Class IDs: %s' % np.array_str(class_ids))
+st.text('Image Dimensions: %s' % ' '.join(str(a) for a in image.shape))
 
-plt.figure(figsize=(10, 10))
-plt.imshow(image[:, :, 0], cmap='gray')
-plt.axis('off')
-plt.subplot(1, 2, 2)
+# Visualize instance
+fig, axarr = plt.subplots(1, 2, sharex=False, sharey=True)
+axarr[0].imshow(image[:, :, 0], cmap='gray')
+axarr[0].axis('off')
 masked = np.zeros(image.shape[:2])
 for i in range(mask.shape[2]):
     masked += image[:, :, 0] * mask[:, :, i]
-plt.imshow(masked, cmap='gray')
-plt.axis('off')
+axarr[1].imshow(masked, cmap='gray')
+axarr[1].axis('off')
+st.pyplot(fig)
 
 # Set up Mask R-CNN model
+elapsed_start = time.perf_counter()
 model = modellib.MaskRCNN(
     mode='training',
     config=MASKRCNN_CONFIG,
     model_dir=MODEL_DIR)
+elapsed_end = time.perf_counter()
+'Elapsed Time: %ss' % round(elapsed_end - elapsed_start, 4)
 
 # Add initial image augmentation params
 augmentation = iaa.SomeOf((0, 1), [
@@ -173,13 +239,15 @@ augmentation = iaa.SomeOf((0, 1), [
 ])
 
 # Train the model!
-NUM_EPOCHS = 1
+NUM_EPOCHS = 100
+elapsed_start = time.perf_counter()
 model.train(train_dataset=dataset_train,
             val_dataset=dataset_valid,
             learning_rate=MASKRCNN_CONFIG.LEARNING_RATE,
             epochs=NUM_EPOCHS,
             layers='all',
             augmentation=augmentation)  # slow
+'Elapsed Time: %ss' % round(elapsed_end - elapsed_start, 4)
 
 # Select the trained model
 dir_names = next(os.walk(model.model_dir))[1]
@@ -188,9 +256,9 @@ dir_names = filter(lambda f: f.startswith(key), dir_names)
 dir_names = sorted(dir_names)
 if not dir_names:
     import errno
-    raise FileNotFoundError(
+    raise IOError(
         errno.ENOENT,
-        "Could not find model directory under {}".format(self.model_dir))
+        "Could not find model directory under {}".format(model.model_dir))
 else:
     print(dir_names)
 
@@ -211,12 +279,9 @@ model_path = sorted(fps)[-1]
 print('Found model {}'.format(model_path))
 
 # Conduct model inference
-
-
 class InferenceConfig(DetectorConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
-
 
 INFERENCE_CONFIG = InferenceConfig()
 

@@ -8,10 +8,13 @@ import boto3
 import botocore
 import pydicom
 import pandas as pd
+import streamlit as st
 
 S3_CLIENT = boto3.client('s3')      # low-level functional API
 S3_RESOURCE = boto3.resource('s3')  # higher-level OOO API
 
+
+@st.cache
 def list_bucket_contents(bucket):
     """List all contents from all buckets (using default configuration)."""
     obj_paths = []
@@ -20,23 +23,27 @@ def list_bucket_contents(bucket):
         obj_paths.append(os.path.join(obj.bucket, obj.key))
     return obj_paths
 
+
+@st.cache
 def parse_dicom_image_list(bucket, verbose=False):
     """Get list of DICOMs from S3 bucket and parse train/test and patientId."""
     # TODO: Not efficient. Find way not to do this in a loop.
     image_df = pd.DataFrame(columns=['path', 'subdir', 'patient_id'])
     for obj in S3_RESOURCE.Bucket(name=bucket).objects.all():
-        path = os.path.join(obj.bucket, obj.key)
+        path = os.path.join(obj.bucket_name, obj.key)
         if path.endswith('.dcm'):
             if verbose:
                 print(path)
             path_parts = path.split('/')
-            image_df = image_df.append({'path': path,
-                                        # either 'train' or 'test'
-                                        'subdir': path_parts[3].split('_')[2],
-                                        'patient_id': path_parts[-1].split('.')[0]},
-                                       ignore_index=True)
+            image_df = image_df.append({
+                'path': path,
+                'subdir': path_parts[3].split('_')[2],
+                'patient_id': path_parts[-1].split('.')[0]},
+                ignore_index=True)
     return image_df
 
+
+@st.cache
 def read_s3_df(bucket, file_key):
     """Read CSV from S3 and return a pandas dataframe."""
     try:
@@ -48,11 +55,15 @@ def read_s3_df(bucket, file_key):
         else:
             raise
 
+
+@st.cache
 def get_s3_dcm(bucket, file_key):
     """Read DICOM from S3"""
     obj = S3_CLIENT.get_object(Bucket=bucket, Key=file_key)
     return pydicom.read_file(BytesIO(obj['Body'].read()))
 
+
+@st.cache
 def parse_training_labels(train_box_df, train_image_dirpath):
     """
     Method to read a CSV file (Pandas dataframe) and parse the

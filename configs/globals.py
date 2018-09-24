@@ -1,8 +1,8 @@
-"""
-Global config class for project-wide configs.
-"""
+"""Global config class for project-wide configs."""
+
 
 class GlobalConfig:
+    """Config class for globals."""
 
     __conf = {
         'ROOT_DIR': '/projects/lungbox',
@@ -21,10 +21,12 @@ class GlobalConfig:
 
     @staticmethod
     def get(name):
+        """Get config by name."""
         return GlobalConfig.__conf[name]
 
     @staticmethod
     def set(name, value):
+        """Set config if config is settable."""
         if name in GlobalConfig.__setters:
             GlobalConfig.__conf[name] = value
         else:
