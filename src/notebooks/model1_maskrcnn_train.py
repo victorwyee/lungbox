@@ -2,6 +2,11 @@
 """Initial model with Mask R-CNN: Training.
 
 References:
+    Mask R-CNN
+    - https://github.com/matterport/Mask_RCNN
+    - https://github.com/matterport/Mask_RCNN/blob/master/samples/coco/inspect_model.ipynb
+    - Retrieved 2018-09-19
+    - Licensed under the MIT License
     Intro to deep learning for medical imaging by MD.ai
     - https://github.com/mdai/ml-lessons/blob/master/lesson3-rsna-pneumonia-detection-mdai-client-lib.ipynb
     - Retrieved 2018-09-20
@@ -13,6 +18,7 @@ import sys
 import random
 import numpy as np
 import time
+import collections
 
 # For image reading & manipulation
 from imgaug import augmenters as iaa
@@ -23,6 +29,7 @@ import src.ingestion as ingest
 # TODO: Find better way to import a local library
 sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
 import libs.Mask_RCNN.mrcnn.model as modellib
+import libs.Mask_RCNN.mrcnn.utils as utils
 import libs.Mask_RCNN.mrcnn.visualize as visualize
 
 # Import Mask CNN helper classes
@@ -266,8 +273,8 @@ print("Loading weights from ", model_path)
 model.load_weights(model_path, by_name=True)
 
 
-# Set color for class
 def get_colors_for_class_ids(class_ids):
+    """Set color for class."""
     colors = []
     for class_id in class_ids:
         if class_id == 1:
@@ -275,31 +282,116 @@ def get_colors_for_class_ids(class_ids):
     return colors
 
 
-# Show some examples of ground truth vs. predictions on the validation set
-fig = plt.figure(figsize=(10, 30))
-image_id = 6
-original_image, image_meta, gt_class_id, gt_bbox, gt_mask =\
-    modellib.load_image_gt(dataset_valid, MASKRCNN_INFER_CONFIG,
-                           image_id, use_mini_mask=False)
-visualize.display_instances(
-    image=original_image,
-    boxes=gt_bbox,
-    masks=gt_mask,
-    class_ids=gt_class_id,
-    class_names=dataset_valid.class_names,
-    figsize=(4, 4),
-    colors=get_colors_for_class_ids(gt_class_id),
-    ax=fig.axes)
+def show_random_predictions(dataset, inference_config, number_of_images=3, verbose=1):
+    """Show some examples of ground truth vs. predictions on the validation set."""
 
-results = model.detect([original_image], verbose=1)
-r = results[0]
-visualize.display_instances(
-    image=original_image,
-    boxes=r['rois'],
-    masks=r['masks'],
-    class_ids=r['class_ids'],
-    class_names=dataset_valid.class_names,
-    figsize=(4, 4),
-    scores=r['scores'],
-    colors=get_colors_for_class_ids(r['class_ids']),
-    ax=fig.axes)
+    fig = plt.figure(figsize=(10, 20))
+    num_imgs = 3
+    for i in range(num_imgs):
+        image_id = random.choice(dataset.image_ids)
+        print(image_id)
+        original_image, image_meta, gt_class_id, gt_bbox, gt_mask =\
+            modellib.load_image_gt(
+                dataset=dataset,
+                config=inference_config,
+                image_id=image_id,
+                augment=False,
+                augmentation=None,
+                use_mini_mask=False)
+        plt.subplot(num_imgs, 2, 2 * i + 1)
+        visualize.display_instances(
+            image=original_image,
+            boxes=gt_bbox,
+            masks=gt_mask,
+            class_ids=gt_class_id,
+            class_names=dataset.class_names,
+            colors=get_colors_for_class_ids(gt_class_id),
+            ax=fig.axes[-1])
+        plt.title('Ground Truth')
+        plt.subplot(num_imgs, 2, 2 * i + 2)
+
+        results = model.detect([original_image], verbose=verbose)
+        r = results[0]
+        visualize.display_instances(
+            image=original_image,
+            boxes=r['rois'],
+            masks=r['masks'],
+            class_ids=r['class_ids'],
+            class_names=dataset.class_names,
+            scores=r['scores'],
+            colors=get_colors_for_class_ids(r['class_ids']),
+            ax=fig.axes[-1])
+        plt.title('Prediction')
+
+
+show_random_predictions(
+    dataset=dataset_valid,
+    inference_config=MASKRCNN_INFER_CONFIG)
+
+# ---- MODEL EVALUATION --------------------------------------------------------
+
+
+def get_class_result(gt_class, pred_class):
+    if 1 in gt_class and 1 in pred_class:
+        return 'tp'
+    elif 1 in gt_class and 1 not in pred_class:
+        return 'fn'
+    elif 1 not in gt_class and 1 in pred_class:
+        return 'fp'
+    else:
+        return 'tn'
+
+
+def compute_batch_metrics(dataset, inference_config, image_ids, verbose=False):
+
+    all_results = dict()
+
+    for image_id in image_ids:
+
+        # Load image
+        image, image_meta, gt_class_id, gt_bbox, gt_mask =\
+            modellib.load_image_gt(dataset, inference_config,
+                                   image_id=image_id, use_mini_mask=False)
+
+        # Run object detection
+        results = model.detect([image], verbose=verbose)
+        r = results[0]
+
+        # Commute metrics
+        all_results[image_id] = dict()
+        class_result = get_class_result(
+            gt_class=gt_class_id,
+            pred_class=r['class_ids'])
+        all_results[image_id]['class_result'] = class_result
+
+        if class_result == 'tp':
+            ap, precisions, recalls, overlaps = utils.compute_ap(
+                gt_bbox, gt_class_id, gt_mask,
+                r['rois'], r['class_ids'], r['scores'], r['masks'],
+                iou_threshold=0.5)
+            all_results[image_id]['ap'] = ap
+            all_results[image_id]['precisions'] = precisions
+            all_results[image_id]['recalls'] = recalls
+            all_results[image_id]['gt_bbox'] = gt_bbox
+            all_results[image_id]['pred_bbox'] = r['rois']
+            all_results[image_id]['pred_score'] = r['scores']
+            all_results[image_id]['overlaps'] = overlaps
+
+    return all_results
+
+
+# Compute metrics on a subset of metrics
+APs = utils.compute_batch_ap(
+    dataset=dataset_valid,
+    inference_config=MASKRCNN_INFER_CONFIG,
+    image_ids=np.random.choice(dataset_valid.image_ids, 1))
+print("mAP @ IoU=50: ", np.mean(APs))
+
+# Compute metrics on all test images
+all_results = compute_batch_metrics(
+    dataset=dataset_valid,
+    inference_config=MASKRCNN_INFER_CONFIG,
+    image_ids=dataset_valid.image_ids)
+len(all_results)
+collections.Counter(v['class_result'] for k, v in all_results.items())
+# Counter({'fp': 130, 'tp': 60, 'tn': 7, 'fn': 3})
