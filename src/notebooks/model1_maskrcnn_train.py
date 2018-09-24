@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Initial model with Mask R-CNN.
+"""Initial model with Mask R-CNN: Training.
 
 References:
     Intro to deep learning for medical imaging by MD.ai
@@ -22,12 +22,12 @@ import src.ingestion as ingest
 # Import local matterport/Mask_RCNN lib
 # TODO: Find better way to import a local library
 sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
-from libs.Mask_RCNN.mrcnn.config import Config
 import libs.Mask_RCNN.mrcnn.model as modellib
-from libs.Mask_RCNN.mrcnn import visualize
 
 # Import Mask CNN helper classes
 from src.analysis.mask_rcnn import DetectorDataset
+from src.notebooks.model1_maskrcnn_config import DetectorConfig
+from src.notebooks.model1_maskrcnn_config import InferenceConfig
 
 # Start streamlit notebook
 import streamlit as st
@@ -58,6 +58,7 @@ random.seed(RANDOM_SEED)
 
 st.markdown('# Model 1: Mask R-CNN')
 st.markdown('## Overview')
+st.markdown(' ')
 st.markdown(
     """
     This is a first pass at a bounding box predictor using
@@ -68,6 +69,7 @@ st.markdown(
 # ---- DATA --------------------------------------------------------------------
 
 st.markdown('## Data')
+st.markdown(' ')
 st.markdown(
     """
     * RSNA 2018 Challenge dataset
@@ -133,46 +135,10 @@ st.markdown(
     """
 )
 
-# Non-optimal initial Mask R-CNN config
-class DetectorConfig(Config):
-    """Configuration for training pneumonia detection on the RSNA pneumonia
-    dataset. Overrides values in the base Config class.
-    """
-
-    # Give the configuration a recognizable name
-    NAME = 'pneumonia'
-
-    # Train on 1 GPU and 8 images per GPU. We can put multiple images on each
-    # GPU because the images are small. Batch size is 8 (GPUs * images/GPU).
-    GPU_COUNT = 1
-    IMAGES_PER_GPU = 8
-
-    BACKBONE = 'resnet101'
-
-    NUM_CLASSES = 2  # background + 1 pneumonia classes
-
-    IMAGE_MIN_DIM = 256
-    IMAGE_MAX_DIM = 256
-    RPN_ANCHOR_SCALES = (32, 64, 128, 256)
-    TRAIN_ROIS_PER_IMAGE = 32
-    MAX_GT_INSTANCES = 3
-    DETECTION_MAX_INSTANCES = 3
-    DETECTION_MIN_CONFIDENCE = 0.9
-    DETECTION_NMS_THRESHOLD = 0.1
-
-    STEPS_PER_EPOCH = 100
-
-    def get_attrs(self):
-        """Return all configs in one string."""
-        return '\n'.join(
-            "{:30} {}".format(a, getattr(self, a)) for a in dir(self)
-            if not a.startswith("__")
-            and not callable(getattr(self, a)))
-
-
 st.markdown('### Model Configuration')
-MASKRCNN_CONFIG = DetectorConfig()
-st.text(MASKRCNN_CONFIG.get_attrs())
+st.markdown(' ')
+MASKRCNN_MODEL_CONFIG = DetectorConfig()
+st.text(MASKRCNN_MODEL_CONFIG.get_attrs())
 
 # Prepare training and validation sets.
 dataset_train = DetectorDataset(
@@ -197,7 +163,7 @@ st.json(dataset_train.image_info[:5])
 
 # Inspect a single instance
 st.markdown('### Example Instance')
-image_id = 88 # random.randint(0, 100)
+image_id = 88  # random.randint(0, 100)
 image_fp = dataset_train.image_reference(image_id)
 image = dataset_train.load_image(image_id=image_id)
 mask, class_ids = dataset_train.load_mask(image_id=image_id)
@@ -221,18 +187,18 @@ st.pyplot(fig)
 elapsed_start = time.perf_counter()
 model = modellib.MaskRCNN(
     mode='training',
-    config=MASKRCNN_CONFIG,
+    config=MASKRCNN_MODEL_CONFIG,
     model_dir=MODEL_DIR)
 elapsed_end = time.perf_counter()
-'Elapsed Time: %ss' % round(elapsed_end - elapsed_start, 4)
+print('Elapsed Time: %ss' % round(elapsed_end - elapsed_start, 4))
 
 # Add initial image augmentation params
 augmentation = iaa.SomeOf((0, 1), [
     iaa.Fliplr(0.5),
     iaa.Affine(
         scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
-        translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
-        rotate=(-25, 25),
+        translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)},
+        rotate=(-10, 10),
         shear=(-8, 8)
     ),
     iaa.Multiply((0.9, 1.1))
@@ -243,15 +209,28 @@ NUM_EPOCHS = 100
 elapsed_start = time.perf_counter()
 model.train(train_dataset=dataset_train,
             val_dataset=dataset_valid,
-            learning_rate=MASKRCNN_CONFIG.LEARNING_RATE,
+            learning_rate=MASKRCNN_MODEL_CONFIG.LEARNING_RATE,
             epochs=NUM_EPOCHS,
             layers='all',
             augmentation=augmentation)  # slow
-'Elapsed Time: %ss' % round(elapsed_end - elapsed_start, 4)
+elapsed_end = time.perf_counter()
+print('Elapsed Time: %ss' % round(elapsed_end - elapsed_start, 4))
+
+# ---- INFERENCE ---------------------------------------------------------------
+
+st.markdown('### Inference Configuration')
+st.markdown(' ')
+MASKRCNN_INFER_CONFIG = InferenceConfig()
+st.text(MASKRCNN_INFER_CONFIG.get_attrs())
+
+model = modellib.MaskRCNN(
+    mode='inference',
+    config=MASKRCNN_INFER_CONFIG,
+    model_dir=MODEL_DIR)
 
 # Select the trained model
 dir_names = next(os.walk(model.model_dir))[1]
-key = MASKRCNN_CONFIG.NAME.lower()
+key = MASKRCNN_MODEL_CONFIG.NAME.lower()
 dir_names = filter(lambda f: f.startswith(key), dir_names)
 dir_names = sorted(dir_names)
 if not dir_names:
@@ -278,23 +257,11 @@ for d in dir_names:
 model_path = sorted(fps)[-1]
 print('Found model {}'.format(model_path))
 
-# Conduct model inference
-class InferenceConfig(DetectorConfig):
-    GPU_COUNT = 1
-    IMAGES_PER_GPU = 1
-
-INFERENCE_CONFIG = InferenceConfig()
-
-# Recreate the model in inference mode
-model = modellib.MaskRCNN(
-    mode='inference',
-    config=INFERENCE_CONFIG,
-    model_dir=MODEL_DIR)
-
 # Load trained weights (fill in path to trained weights here)
 assert model_path != "", "Provide path to trained weights"
 print("Loading weights from ", model_path)
 model.load_weights(model_path, by_name=True)
+
 
 # Set color for class
 def get_colors_for_class_ids(class_ids):
@@ -310,7 +277,7 @@ fig = plt.figure(figsize=(10, 30))
 
 image_id = 6
 original_image, image_meta, gt_class_id, gt_bbox, gt_mask =\
-    modellib.load_image_gt(dataset_valid, INFERENCE_CONFIG,
+    modellib.load_image_gt(dataset_valid, MASKRCNN_INFER_CONFIG,
                            image_id, use_mini_mask=False)
 visualize.display_instances(
     image=original_image,
