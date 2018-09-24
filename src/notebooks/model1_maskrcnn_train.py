@@ -60,6 +60,8 @@ os.environ['AWS_REGION'] = GlobalConfig.get('AWS_REGION')
 DICOM_WIDTH = 1024
 DICOM_HEIGHT = 1024
 RANDOM_SEED = 42
+SUBSET_SIZE = 25684  # 25684 training images
+NUM_EPOCHS = 10
 random.seed(RANDOM_SEED)
 
 # ---- OVERVIEW ----------------------------------------------------------------
@@ -107,7 +109,7 @@ print(annotation_dict['00436515-870c-4b36-a041-de91049b9ab4'])
 image_df = ingest.parse_dicom_image_list(bucket=S3_BUCKET_NAME)  # slow
 print(image_df.head())
 
-# Take initial subset of 1000 patients
+# Take subset of dataset
 st.markdown(
     """
     For our first iteration, we will use a small subset of 1000 images,
@@ -115,7 +117,7 @@ st.markdown(
     """
 )
 patient_id_subset = sorted(list(
-    image_df[image_df['subdir'] == 'train']['patient_id'])[:1000])
+    image_df[image_df['subdir'] == 'train']['patient_id'])[:SUBSET_SIZE])
 
 # Split dataset for training and validation
 sorted(patient_id_subset)
@@ -215,7 +217,6 @@ augmentation = iaa.SomeOf((0, 1), [
 ])
 
 # Train the model!
-NUM_EPOCHS = 100
 elapsed_start = time.perf_counter()
 model.train(train_dataset=dataset_train,
             val_dataset=dataset_valid,
