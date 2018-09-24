@@ -23,6 +23,7 @@ import src.ingestion as ingest
 # TODO: Find better way to import a local library
 sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
 import libs.Mask_RCNN.mrcnn.model as modellib
+import libs.Mask_RCNN.mrcnn.visualize as visualize
 
 # Import Mask CNN helper classes
 from src.analysis.mask_rcnn import DetectorDataset
@@ -66,7 +67,7 @@ st.markdown(
     """
 )
 
-# ---- DATA --------------------------------------------------------------------
+# ---- EXTRACT DATA ------------------------------------------------------------
 
 st.markdown('## Data')
 st.markdown(' ')
@@ -121,24 +122,7 @@ patient_id_valid = patient_id_subset[split_index:]
 
 print(len(patient_id_train), len(patient_id_valid))
 
-# ---- MODEL -------------------------------------------------------------------
-
-st.markdown('## Model\n')
-st.markdown(' ')
-st.markdown(
-    """\n\n
-    * FPN + ResNet50
-        * (He et al. (2017). Mask R-CNN.)[https://arxiv.org/abs/1703.06870]
-    * Existing implementations
-        * https://github.com/facebookresearch/Detectron
-        * https://github.com/matterport/Mask_RCNN
-    """
-)
-
-st.markdown('### Model Configuration')
-st.markdown(' ')
-MASKRCNN_MODEL_CONFIG = DetectorConfig()
-st.text(MASKRCNN_MODEL_CONFIG.get_attrs())
+# ---- PREPARE TRAINING/VALIDATION SET -----------------------------------------
 
 # Prepare training and validation sets.
 dataset_train = DetectorDataset(
@@ -183,6 +167,25 @@ axarr[1].imshow(masked, cmap='gray')
 axarr[1].axis('off')
 st.pyplot(fig)
 
+# ---- TRAIN MODEL -------------------------------------------------------------
+
+st.markdown('## Model\n')
+st.markdown(' ')
+st.markdown(
+    """\n\n
+    * FPN + ResNet50
+        * (He et al. (2017). Mask R-CNN.)[https://arxiv.org/abs/1703.06870]
+    * Existing implementations
+        * https://github.com/facebookresearch/Detectron
+        * https://github.com/matterport/Mask_RCNN
+    """
+)
+
+st.markdown('### Model Configuration')
+st.markdown(' ')
+MASKRCNN_MODEL_CONFIG = DetectorConfig()
+st.text(MASKRCNN_MODEL_CONFIG.get_attrs())
+
 # Set up Mask R-CNN model
 elapsed_start = time.perf_counter()
 model = modellib.MaskRCNN(
@@ -222,7 +225,7 @@ st.markdown('### Inference Configuration')
 st.markdown(' ')
 MASKRCNN_INFER_CONFIG = InferenceConfig()
 st.text(MASKRCNN_INFER_CONFIG.get_attrs())
-
+MASKRCNN_INFER_CONFIG.NAME
 model = modellib.MaskRCNN(
     mode='inference',
     config=MASKRCNN_INFER_CONFIG,
@@ -230,7 +233,7 @@ model = modellib.MaskRCNN(
 
 # Select the trained model
 dir_names = next(os.walk(model.model_dir))[1]
-key = MASKRCNN_MODEL_CONFIG.NAME.lower()
+key = MASKRCNN_INFER_CONFIG.NAME.lower()
 dir_names = filter(lambda f: f.startswith(key), dir_names)
 dir_names = sorted(dir_names)
 if not dir_names:
@@ -274,7 +277,6 @@ def get_colors_for_class_ids(class_ids):
 
 # Show some examples of ground truth vs. predictions on the validation set
 fig = plt.figure(figsize=(10, 30))
-
 image_id = 6
 original_image, image_meta, gt_class_id, gt_bbox, gt_mask =\
     modellib.load_image_gt(dataset_valid, MASKRCNN_INFER_CONFIG,
