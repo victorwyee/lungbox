@@ -14,11 +14,15 @@ References:
 """
 
 import os
+import sys
 import time
 from imgaug import augmenters as iaa
+
+sys.path.append(os.path.join('/projects/lungbox'))
+sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
 import libs.Mask_RCNN.mrcnn.model as modellib
 from configs.globals import GlobalConfig
-from src.notebooks.model1_maskrcnn_config import DetectorConfig
+from src.notebooks.model1_maskrcnn.config import DetectorConfig
 from src.notebooks.model1_maskrcnn.data import TrainingData
 
 # Set manually since not properly picked up from system config

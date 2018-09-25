@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 sys.path.append(os.path.join('/projects/lungbox'))
 sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
 import libs.Mask_RCNN.mrcnn.model as modellib
+import libs.Mask_RCNN.mrcnn.utils as modelutils
 import libs.Mask_RCNN.mrcnn.visualize as visualize
-import libs.Mask_RCNN.mrcnn.utils as mrcnn_utils
 
 
 def split_dataset(ids, validation_split=0.2):
@@ -141,7 +141,7 @@ def compute_batch_metrics(dataset, model, inference_config, image_ids, verbose=F
         all_results[image_id]['class_result'] = class_result
 
         if class_result == 'tp':
-            ap, precisions, recalls, overlaps = mrcnn_utils.compute_ap(
+            ap, precisions, recalls, overlaps = modelutils.compute_ap(
                 gt_bbox, gt_class_id, gt_mask,
                 r['rois'], r['class_ids'], r['scores'], r['masks'],
                 iou_threshold=0.5)

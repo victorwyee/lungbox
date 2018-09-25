@@ -22,10 +22,12 @@ import collections
 sys.path.append(os.path.join('/projects/lungbox'))
 sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
 
-from src.notebooks.model1_maskrcnn.utils import utils
+import src.notebooks.model1_maskrcnn.utils as utils
 import libs.Mask_RCNN.mrcnn.model as modellib
+import libs.Mask_RCNN.mrcnn.utils as modelutils
+
 from configs.globals import GlobalConfig
-from src.notebooks.model1_maskrcnn_config import InferenceConfig
+from src.notebooks.model1_maskrcnn.config import InferenceConfig
 from src.notebooks.model1_maskrcnn.data import TrainingData
 
 # Set manually since not properly picked up from system config
@@ -60,7 +62,7 @@ model.load_weights(model_path, by_name=True)
 dataset_valid = data.get_dataset_valid()
 
 # Compute metrics on a subset of metrics
-APs = utils.compute_batch_ap(
+APs = modelutils.compute_batch_ap(
     dataset=dataset_valid,
     inference_config=InferenceConfig(),
     image_ids=np.random.choice(dataset_valid.image_ids, 1))
