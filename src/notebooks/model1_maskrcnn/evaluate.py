@@ -1,38 +1,32 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Initial model with Mask R-CNN: Inference and Model Evaluation.
+# File: train.py
 
-References:
-    Mask R-CNN
-    - https://github.com/matterport/Mask_RCNN
-    - https://github.com/matterport/Mask_RCNN/blob/master/samples/coco/inspect_model.ipynb
-    - Retrieved 2018-09-19
-    - License: MIT License
-    Intro to deep learning for medical imaging by MD.ai
-    - https://github.com/mdai/ml-lessons/blob/master/lesson3-rsna-pneumonia-detection-mdai-client-lib.ipynb
-    - Retrieved 2018-09-20
-    - License: Apache License, Version 2.0
-"""
+"""Initial model with Mask R-CNN: Inference and Model Evaluation."""
 
 import os
 import sys
 import time
 import collections
 
-sys.path.append(os.path.join('/projects/lungbox'))
-sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
+try:
+    script_path = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    script_path = "/projects/lungbox/src/notebooks/model1_maskrcnn"
+    sys.path.append(script_path)
+sys.path.append(script_path + "/Mask_RCNN")
 
-import src.notebooks.model1_maskrcnn.utils as utils
-import libs.Mask_RCNN.mrcnn.model as modellib
-
-from configs.globals import GlobalConfig
-from src.notebooks.model1_maskrcnn.config import InferenceConfig
-from src.notebooks.model1_maskrcnn.data import TrainingData
+import utils
+import Mask_RCNN.mrcnn.model as modellib
+from config import GlobalConfig
+from config import InferenceConfig
+from data import TrainingData
 
 # Set manually since not properly picked up from system config
 os.environ['AWS_REGION'] = GlobalConfig.get('AWS_REGION')
 
 # Set evalaution constants
-SUBSET_SIZE = GlobalConfig.get('TRAINING_DATA_MAX_SIZE')  # 25684
+SUBSET_SIZE = 10  # GlobalConfig.get('TRAINING_DATA_MAX_SIZE')  # 25684
 
 # Get data
 data = TrainingData(subset_size=SUBSET_SIZE, validation_split=0.2)

@@ -4,14 +4,11 @@
 import os
 import sys
 import random
+import utils
 
-sys.path.append(os.path.join('/projects/lungbox'))
-sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
-
-import src.ingestion as ingest
-import src.notebooks.model1_maskrcnn.utils as utils
-from src.analysis.mask_rcnn import DetectorDataset
-from configs.globals import GlobalConfig
+import ingest
+from model import DetectorDataset
+from config import GlobalConfig
 
 
 class TrainingData:
@@ -33,6 +30,8 @@ class TrainingData:
 
     def __init__(self, subset_size, validation_split):
         random.seed(GlobalConfig.get('RANDOM_SEED'))
+
+        # Split train/test sets
         patient_id_subset = sorted(list(
             self.image_df[self.image_df['subdir'] == 'train']['patient_id'])[:subset_size])
         id_split = utils.split_dataset(

@@ -1,20 +1,46 @@
 # -*- coding: utf-8 -*-
-"""Initial model with Mask R-CNN: Config.
+"""Initial model with Mask R-CNN: Config."""
 
-References:
-    Mask R-CNN
-    - https://github.com/matterport/Mask_RCNN
-    - https://github.com/matterport/Mask_RCNN/blob/master/samples/coco/inspect_model.ipynb
-    - Retrieved 2018-09-19
-    - License: MIT License
-    Intro to deep learning for medical imaging by MD.ai
-    - https://github.com/mdai/ml-lessons/blob/master/lesson3-rsna-pneumonia-detection-mdai-client-lib.ipynb
-    - Retrieved 2018-09-20
-    - License: Apache License, Version 2.0
-"""
+import os
+import sys
+script_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(script_path + "/Mask_RCNN")
+from mrcnn.config import Config
 
 
-from libs.Mask_RCNN.mrcnn.config import Config
+class GlobalConfig:
+    """Config class for globals."""
+
+    __conf = {
+        'ROOT_DIR': '/projects/lungbox',
+        'RANDOM_SEED': 42,
+        'AWS_REGION': 'us-west-2',
+        'AWS_ACCESS_KEY': '',
+        'S3_BUCKET_NAME': 'lungbox',
+        'S3_CLASS_INFO_KEY': 'data/raw/stage_1_detailed_class_info.csv',
+        'S3_TRAIN_BOX_KEY': 'data/raw/stage_1_train_labels.csv',
+        'S3_CLASS_INFO_PATH': 's3://lungbox/data/raw/stage_1_detailed_class_info.csv',
+        'S3_TRAIN_BOX_PATH': 's3://lungbox/data/raw/stage_1_train_labels.csv',
+        'S3_STAGE1_TRAIN_IMAGE_DIR': 'data/raw/stage_1_train_images',
+        'S3_STAGE1_TEST_IMAGE_DIR': 'data/raw/stage_1_test_images',
+        'MODEL_DIR': '/projects/lungbox/models',
+        'S3_MODEL_DIR': 's3://lungbox/models',
+        'TRAINING_DATA_MAX_SIZE': 25684
+    }
+    __setters = ['AWS_ACCESS_KEY']
+
+    @staticmethod
+    def get(name):
+        """Get config by name."""
+        return GlobalConfig.__conf[name]
+
+    @staticmethod
+    def set(name, value):
+        """Set config if config is settable."""
+        if name in GlobalConfig.__setters:
+            GlobalConfig.__conf[name] = value
+        else:
+            raise NameError("Name not accepted in set() method")
 
 
 class DetectorConfig(Config):

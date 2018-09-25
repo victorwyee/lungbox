@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Functions for interacting with AWS"""
+"""Data retrieval and pre-processing utilities."""
 
-from io import BytesIO
-
-import os
 import boto3
 import botocore
+from io import BytesIO
 import pydicom
 import pandas as pd
 import streamlit as st

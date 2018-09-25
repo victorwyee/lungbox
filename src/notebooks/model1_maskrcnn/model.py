@@ -1,12 +1,15 @@
+import os
+import sys
 import numpy as np
 import cv2
 
-from libs.Mask_RCNN.mrcnn import utils
-import libs.Mask_RCNN.mrcnn.model as modellib
-from libs.Mask_RCNN.mrcnn import visualize
-from libs.Mask_RCNN.mrcnn.model import log
-
-import src.ingestion as ingest
+import ingest
+script_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(script_path + "/Mask_RCNN")
+import Mask_RCNN.mrcnn.model as modellib
+from Mask_RCNN.mrcnn import utils
+from Mask_RCNN.mrcnn import visualize
+from Mask_RCNN.mrcnn.model import log
 
 
 class DetectorDataset(utils.Dataset):

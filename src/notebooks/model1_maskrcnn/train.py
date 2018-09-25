@@ -1,40 +1,37 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Initial model with Mask R-CNN: Training.
+# File: train.py
 
-References:
-    Mask R-CNN
-    - https://github.com/matterport/Mask_RCNN
-    - https://github.com/matterport/Mask_RCNN/blob/master/samples/coco/inspect_model.ipynb
-    - Retrieved 2018-09-19
-    - License: MIT License
-    Intro to deep learning for medical imaging by MD.ai
-    - https://github.com/mdai/ml-lessons/blob/master/lesson3-rsna-pneumonia-detection-mdai-client-lib.ipynb
-    - Retrieved 2018-09-20
-    - License: Apache License, Version 2.0
-"""
+"""Initial model with Mask R-CNN: Training."""
 
 import os
 import sys
 import time
 from imgaug import augmenters as iaa
 
-sys.path.append(os.path.join('/projects/lungbox'))
-sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
+try:
+    script_path = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    script_path = "/projects/lungbox/src/notebooks/model1_maskrcnn"
+    sys.path.append(script_path)
+sys.path.append(script_path + "/Mask_RCNN")
 
-import libs.Mask_RCNN.mrcnn.model as modellib
-from configs.globals import GlobalConfig
-from src.notebooks.model1_maskrcnn.config import DetectorConfig
-from src.notebooks.model1_maskrcnn.data import TrainingData
+import Mask_RCNN.mrcnn.model as modellib
+from config import GlobalConfig
+from config import DetectorConfig
+from data import TrainingData
 
 # Set manually since not properly picked up from system config
 os.environ['AWS_REGION'] = GlobalConfig.get('AWS_REGION')
 
 # Set training constants
-NUM_EPOCHS = 10
-SUBSET_SIZE = GlobalConfig.get('TRAINING_DATA_MAX_SIZE')  # 25684
+NUM_EPOCHS = 1   # 10
+SUBSET_SIZE = 10 # GlobalConfig.get('TRAINING_DATA_MAX_SIZE')  # 25684
 
 # Get data
 data = TrainingData(subset_size=SUBSET_SIZE, validation_split=0.2)
+
+# ---- LOAD MODEL --------------------------------------------------------------
 
 # Set up Mask R-CNN model
 elapsed_start = time.perf_counter()
@@ -56,6 +53,8 @@ augmentation = iaa.SomeOf((0, 1), [
     ),
     iaa.Multiply((0.9, 1.1))
 ])
+
+# ---- TRAIN MODEL -------------------------------------------------------------
 
 # Train the model! (SLOW)
 elapsed_start = time.perf_counter()
