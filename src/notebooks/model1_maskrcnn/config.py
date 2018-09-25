@@ -2,11 +2,17 @@
 """Initial model with Mask R-CNN: Config.
 
 References:
+    Mask R-CNN
+    - https://github.com/matterport/Mask_RCNN
+    - https://github.com/matterport/Mask_RCNN/blob/master/samples/coco/inspect_model.ipynb
+    - Retrieved 2018-09-19
+    - License: MIT License
     Intro to deep learning for medical imaging by MD.ai
     - https://github.com/mdai/ml-lessons/blob/master/lesson3-rsna-pneumonia-detection-mdai-client-lib.ipynb
     - Retrieved 2018-09-20
-    - Licensed under the Apache License, Version 2.0
+    - License: Apache License, Version 2.0
 """
+
 
 from libs.Mask_RCNN.mrcnn.config import Config
 

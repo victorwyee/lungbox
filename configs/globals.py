@@ -6,6 +6,7 @@ class GlobalConfig:
 
     __conf = {
         'ROOT_DIR': '/projects/lungbox',
+        'RANDOM_SEED': 42,
         'AWS_REGION': 'us-west-2',
         'AWS_ACCESS_KEY': '',
         'S3_BUCKET_NAME': 'lungbox',
@@ -15,7 +16,9 @@ class GlobalConfig:
         'S3_TRAIN_BOX_PATH': 's3://lungbox/data/raw/stage_1_train_labels.csv',
         'S3_STAGE1_TRAIN_IMAGE_DIR': 'data/raw/stage_1_train_images',
         'S3_STAGE1_TEST_IMAGE_DIR': 'data/raw/stage_1_test_images',
-        'MODEL_DIR': '/projects/lungbox/models'
+        'MODEL_DIR': '/projects/lungbox/models',
+        'S3_MODEL_DIR': 's3://lungbox/models',
+        'TRAINING_DATA_MAX_SIZE': 25684
     }
     __setters = ['AWS_ACCESS_KEY']
 
