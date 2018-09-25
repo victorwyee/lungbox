@@ -15,7 +15,6 @@ References:
 
 import os
 import sys
-import numpy as np
 import time
 import collections
 
@@ -24,7 +23,6 @@ sys.path.append(os.path.join('/projects/lungbox/libs/Mask_RCNN'))
 
 import src.notebooks.model1_maskrcnn.utils as utils
 import libs.Mask_RCNN.mrcnn.model as modellib
-import libs.Mask_RCNN.mrcnn.utils as modelutils
 
 from configs.globals import GlobalConfig
 from src.notebooks.model1_maskrcnn.config import InferenceConfig
@@ -62,11 +60,11 @@ model.load_weights(model_path, by_name=True)
 dataset_valid = data.get_dataset_valid()
 
 # Compute metrics on a subset of metrics
-APs = modelutils.compute_batch_ap(
-    dataset=dataset_valid,
-    inference_config=InferenceConfig(),
-    image_ids=np.random.choice(dataset_valid.image_ids, 1))
-print("mAP @ IoU=50: ", np.mean(APs))
+# APs = modelutils.compute_batch_ap(
+#    dataset=dataset_valid,
+#    inference_config=InferenceConfig(),
+#    image_ids=np.random.choice(dataset_valid.image_ids, 1))
+# print("mAP @ IoU=50: ", np.mean(APs))
 
 # Compute metrics on all test images
 elapsed_start = time.perf_counter()
@@ -80,4 +78,3 @@ class_counts = collections.Counter(v['class_result'] for k, v in all_results.ite
 elapsed_end = time.perf_counter()
 print(class_counts)
 print('Elapsed Time: %ss' % round(elapsed_end - elapsed_start, 4))
-# Counter({'fp': 130, 'tp': 60, 'tn': 7, 'fn': 3})

@@ -40,8 +40,6 @@ class TrainingData:
             validation_split=validation_split)
         self.patient_id_train = id_split['train_ids']
         self.patient_id_valid = id_split['valid_ids']
-        print("Training instances: %s" % len(self.patient_id_train))
-        print("Validation instances: %s" % len(self.patient_id_valid))
 
     def get_train_ids(self):
         return self.patient_id_train
