@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 import sys
 import numpy as np
@@ -6,32 +8,22 @@ import cv2
 import ingest
 script_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(script_path + "/Mask_RCNN")
-import Mask_RCNN.mrcnn.model as modellib
-from Mask_RCNN.mrcnn import utils
-from Mask_RCNN.mrcnn import visualize
-from Mask_RCNN.mrcnn.model import log
+from Mask_RCNN.mrcnn.utils import Dataset
 
 
-class DetectorDataset(utils.Dataset):
-    """Dataset class for training pneumonia detection on the RSNA pneumonia dataset.
-
-    References:
-    * Intro to deep learning for medical imaging by MD.ai
-        - https://github.com/mdai/ml-lessons/blob/master/lesson3-rsna-pneumonia-detection-mdai-client-lib.ipynb
-        - Retrieved 2018-09-20
-        - Licensed under the Apache License, Version 2.0
-    """
+class DetectorDataset(Dataset):
+    """Dataset class for training pneumonia detection on the RSNA pneumonia dataset."""
 
     def __init__(self, patient_ids, annotation_dict, orig_height, orig_width, s3_bucket):
         super().__init__(self)
         self.s3_bucket = s3_bucket
 
         # Add classes
-        self.add_class('pneumonia', 1, 'Lung Opacity')
+        self.add_class(source='pneumonia', class_id=1, class_name='lung_opacity')
 
         # Add images
         for i, patient_id in enumerate(patient_ids):
-            self.add_image('pneumonia',
+            self.add_image(source='pneumonia',
                            image_id=i,
                            path=annotation_dict[patient_id]['dicom_s3_key'],
                            annotations=annotation_dict[patient_id]['boxes'],
@@ -50,9 +42,6 @@ class DetectorDataset(utils.Dataset):
         info = self.image_info[image_id]
         ds = ingest.get_s3_dcm(bucket=self.s3_bucket, file_key=info['path'])
         image = ds.pixel_array
-        # If grayscale. Convert to RGB for consistency.
-        if len(image.shape) != 3 or image.shape[2] != 3:
-            image = np.stack((image,) * 3, -1)
         return image
 
     def load_mask(self, image_id):
