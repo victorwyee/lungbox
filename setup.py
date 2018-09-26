@@ -8,10 +8,8 @@ To build:
 """
 
 from os import path
-import pip
-import logging
-import pkg_resources
 import setuptools
+
 try:
     from setuptools import setup
 except ImportError:
@@ -26,23 +24,32 @@ with open(path.join(this_dirpath, 'README.md'), 'rb') as f:
     long_description = f.read().decode('utf-8')
 
 
-def _parse_requirements(file_path):
-    pip_ver = pkg_resources.get_distribution('pip').version
-    pip_version = list(map(int, pip_ver.split('.')[:2]))
-    if pip_version >= [6, 0]:
-        raw = pip.req.parse_requirements(file_path,
-                                         session=pip.download.PipSession())
-    else:
-        raw = pip.req.parse_requirements(file_path)
-    return [str(i.req) for i in raw]
-
-
-# parse_requirements() returns generator of pip.req.InstallRequirement objects
-try:
-    install_reqs = _parse_requirements("requirements.txt")
-except Exception:
-    logging.warning('Fail load requirements file, so using default ones.')
-    install_reqs = []
+REQUIRED_PACKAGES = [
+    'atlas==0.27.0',
+    'boto3==1.7.82',
+    'botocore==1.10.84',
+    'configs==3.0.3',
+    'cython==0.28.4',
+    'h5py==2.8.0',
+    'imgaug==0.2.6',
+    'IPython[all]',
+    'Keras==2.2.2',
+    'Keras-Applications==1.0.4',
+    'Keras-Preprocessing==1.0.2',
+    'matplotlib==3.0.0',
+    'numpy==1.14.5',
+    'opencv-python==3.4.3.18',
+    'pandas==0.23.4',
+    'Pillow==5.2.0',
+    'pydicom==1.1.0',
+    'scikit-image==0.13',      # avoid antialiasing warnings in 0.14, enough functionality
+    'scipy==1.1.0',
+    'streamlit==0.15.5',
+    'tensorflow==1.10.0',
+    'tensorflow-gpu==1.10.0',
+    'tensorboard==1.10.0',
+    'tornado==4.5.3'           # allows async within async
+]
 
 setup(
     name='lungbox',
@@ -53,8 +60,7 @@ setup(
     license='MIT',
     description='A bounding box predictor for pneumonia from chest x-rays',
     long_description=long_description,
-    long_description_content_type='text/markdown',
     python_requires='>=3.6',
-    install_requires=install_reqs,
+    install_requires=REQUIRED_PACKAGES,
     tests_require=['flake8', 'scikit-image'],
 )
