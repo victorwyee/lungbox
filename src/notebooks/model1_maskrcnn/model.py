@@ -42,6 +42,9 @@ class DetectorDataset(Dataset):
         info = self.image_info[image_id]
         ds = ingest.get_s3_dcm(bucket=self.s3_bucket, file_key=info['path'])
         image = ds.pixel_array
+
+        # add extra band (4 dimensions expected by mrcnn)
+        image = image.reshape(image.shape + (1,))
         return image
 
     def load_mask(self, image_id):

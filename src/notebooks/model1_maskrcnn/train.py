@@ -70,8 +70,8 @@ if __name__ == '__main__':
     elapsed_start = time.perf_counter()
     model.train(train_dataset=data.get_dataset_train(),
                 val_dataset=data.get_dataset_valid(),
-                learning_rate=learning_rate,
-                epochs=args.epochs,
+                learning_rate=int(learning_rate),
+                epochs=int(args.epochs),
                 layers='all',
                 augmentation=augmentation)
     elapsed_end = time.perf_counter()
