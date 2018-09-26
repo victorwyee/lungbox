@@ -62,9 +62,7 @@ class DetectorConfig(Config):
     # p2.8xlarge: GPU memory = 96GB
     # p3.2xlarge: GPU memory = 16GB
     # p3.8xlarge: GPU memory = 64GB
-    # Since the DICOM images are small, we can put multiple images on each GPU.
-    # Batch size is 8 (GPUs * images/GPU).
-    IMAGES_PER_GPU = 8                 # default: 2
+    IMAGES_PER_GPU = 2                 # default: 2
 
     # Number of training steps per epoch
     # This doesn't need to match the size of the training set. Tensorboard
@@ -91,7 +89,7 @@ class DetectorConfig(Config):
     NUM_CLASSES = 2                    # background + 1 pneumonia classes
 
     # Input image resizing
-    IMAGE_RESIZE_MODE = "square"
+    IMAGE_RESIZE_MODE = 'none'         # default: square -- TODO: resizing currently causes problems
     IMAGE_MIN_DIM = 960                # default: 800  -- smaller cropper recommended
     IMAGE_MAX_DIM = 1024               # default: 1024 -- max size of DICOM images
 
