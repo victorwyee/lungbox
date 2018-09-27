@@ -5,8 +5,8 @@ import os
 import sys
 import random
 import numpy as np
-import matplotlib
-matplotlib.use('TkAgg')
+# import matplotlib
+# matplotlib.use('TkAgg')
 
 try:
     from matplotlib import pyplot as plt
