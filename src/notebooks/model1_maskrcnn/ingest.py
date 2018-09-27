@@ -4,13 +4,15 @@
 import os
 import boto3
 import botocore
+from botocore.client import Config
 from io import BytesIO
 import pydicom
 import pandas as pd
-import streamlit as st
+# import streamlit as st
 
-S3_CLIENT = boto3.client('s3')      # low-level functional API
-S3_RESOURCE = boto3.resource('s3')  # higher-level OOO API
+config = Config(connect_timeout=50, read_timeout=70)
+S3_CLIENT = boto3.client('s3', config=config)      # low-level functional API
+S3_RESOURCE = boto3.resource('s3', config=config)  # higher-level OOO API
 
 
 # @st.cache
@@ -24,7 +26,7 @@ def list_bucket_contents(bucket):
 
 
 # @st.cache
-def parse_dicom_image_list(bucket, verbose=True):
+def parse_dicom_image_list(bucket, subdir='train', limit=None, verbose=False):
     """Get list of DICOMs from S3 bucket and parse train/test and patientId."""
     # TODO: SLOW. Not efficient. Find way not to do this in a loop.
     print("Retrieving image list...")
@@ -35,11 +37,15 @@ def parse_dicom_image_list(bucket, verbose=True):
             if verbose:
                 print(path)
             path_parts = path.split('/')
-            image_df = image_df.append({
-                'path': path,
-                'subdir': path_parts[3].split('_')[2],
-                'patient_id': path_parts[-1].split('.')[0]},
-                ignore_index=True)
+            subdir_part = path_parts[3].split('_')[2]
+            if subdir_part == subdir:
+                image_df = image_df.append({
+                    'path': path,
+                    'subdir': subdir_part,  # train or test
+                    'patient_id': path_parts[-1].split('.')[0]},
+                    ignore_index=True)
+        if limit is not None and (len(image_df.index) == limit):
+            break
     return image_df
 
 
