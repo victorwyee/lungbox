@@ -71,19 +71,19 @@ class DetectorConfig(Config):
     # Validation stats are also calculated at each epoch end and they
     # might take a while, so don't set this too small to avoid spending
     # a lot of time on validation stats.
-    STEPS_PER_EPOCH = 1000             # default: 1000
+    STEPS_PER_EPOCH = 100             # default: 1000
 
     # Number of validation steps to run at the end of every training epoch.
     # A bigger number improves accuracy of validation stats, but slows
     # down the training.
-    VALIDATION_STEPS = 50              # default: 50
+    VALIDATION_STEPS = 5              # default: 50
 
     # Backbone network architecture
     # Supported values are: resnet50, resnet101.
     # You can also provide a callable that should have the signature
     # of model.resnet_graph. If you do so, you need to supply a callable
     # to COMPUTE_BACKBONE_SHAPE as well
-    BACKBONE = 'resnet101'
+    BACKBONE = 'resnet50'
 
     # Number of classification classes (including background)
     NUM_CLASSES = 2                    # background + 1 pneumonia classes
@@ -99,7 +99,7 @@ class DetectorConfig(Config):
     IMAGE_CHANNEL_COUNT = 1            # grayscale
 
     # Image mean
-    MEAN_PIXEL = np.array([127.5])     # NEED TO UPDATE
+    MEAN_PIXEL = np.array([127.5])
 
     # Length of square anchor side in pixels
     RPN_ANCHOR_SCALES = (32, 64, 128, 256, 512)  # default: (32, 64, 128, 256, 512)
