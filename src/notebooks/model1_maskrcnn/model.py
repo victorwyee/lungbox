@@ -44,7 +44,10 @@ class DetectorDataset(Dataset):
         image = ds.pixel_array
 
         # add extra band (4 dimensions expected by mrcnn)
-        image = image.reshape(image.shape + (1,))
+        # image = image.reshape(image.shape + (1,))
+        # If grayscale. Convert to RGB for consistency.
+        if len(image.shape) != 3 or image.shape[2] != 3:
+            image = np.stack((image,) * 3, -1)
         return image
 
     def load_mask(self, image_id):
