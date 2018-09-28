@@ -44,7 +44,6 @@ REQUIRED_PACKAGES = [
     'pydicom==1.1.0',
     'scikit-image==0.13',      # avoid antialiasing warnings in 0.14, enough functionality
     'scipy==1.1.0',
-    'streamlit==0.15.5',
     'tensorflow==1.10.0',
     'tensorflow-gpu==1.10.0',
     'tensorboard==1.10.0',

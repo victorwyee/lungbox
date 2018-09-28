@@ -8,14 +8,13 @@ from botocore.client import Config
 from io import BytesIO
 import pydicom
 import pandas as pd
-# import streamlit as st
+
 
 config = Config(connect_timeout=50, read_timeout=70)
 S3_CLIENT = boto3.client('s3', config=config)      # low-level functional API
 S3_RESOURCE = boto3.resource('s3', config=config)  # higher-level OOO API
 
 
-# @st.cache
 def list_bucket_contents(bucket):
     """List all contents from all buckets (using default configuration)."""
     obj_paths = []
@@ -25,7 +24,6 @@ def list_bucket_contents(bucket):
     return obj_paths
 
 
-# @st.cache
 def parse_dicom_image_list(bucket, subdir='train', limit=None, verbose=False):
     """Get list of DICOMs from S3 bucket and parse train/test and patientId."""
     # TODO: SLOW. Not efficient. Find way not to do this in a loop.
@@ -49,7 +47,6 @@ def parse_dicom_image_list(bucket, subdir='train', limit=None, verbose=False):
     return image_df
 
 
-# @st.cache
 def read_s3_df(bucket, file_key):
     """Read CSV from S3 and return a pandas dataframe."""
     try:
@@ -62,14 +59,12 @@ def read_s3_df(bucket, file_key):
             raise
 
 
-# @st.cache
 def get_s3_dcm(bucket, file_key):
     """Read DICOM from S3"""
     obj = S3_CLIENT.get_object(Bucket=bucket, Key=file_key)
     return pydicom.read_file(BytesIO(obj['Body'].read()))
 
 
-# @st.cache
 def parse_training_labels(train_box_df, train_image_dirpath):
     """
     Method to read a CSV file (Pandas dataframe) and parse the
