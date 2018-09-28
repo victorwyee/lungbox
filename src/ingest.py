@@ -2,13 +2,23 @@
 """Data retrieval and pre-processing utilities."""
 
 import os
+import sys
 import boto3
 import botocore
 from botocore.client import Config
 from io import BytesIO
 import pydicom
 import pandas as pd
+from pathlib import Path
 
+try:
+    script_path = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    script_path = "/projects/lungbox/src"
+    sys.path.append(script_path)
+sys.path.append(script_path + "/Mask_RCNN")
+
+from config import GlobalConfig
 
 config = Config(connect_timeout=50, read_timeout=70)
 S3_CLIENT = boto3.client('s3', config=config)      # low-level functional API
@@ -24,9 +34,33 @@ def list_bucket_contents(bucket):
     return obj_paths
 
 
-def parse_dicom_image_list(bucket, subdir='train', limit=None, verbose=False):
+def parse_local_dicom_image_list(datadir, cache=True, verbose=False):
+    cache_path = GlobalConfig.get('LOCAL_DICOM_IMAGE_LIST_PATH')
+    if cache and Path(my_file).is_file():
+        print('Using cached image list: %s' % cache_path)
+        image_df = pd.read_csv(cache_path)
+        return image_df
+    else:
+        print('Image list not found: %s' % cache_path)
+
+    # TODO: SLOW. Not efficient. Find way not to do this in a loop.
+    image_df = pd.DataFrame(columns=['path', 'subdir', 'patient_id'])
+    for path in os.listdir(datadir):
+        if path.endswith('.dcm'):
+            if verbose:
+                print(path)
+            image_df = image_df.append({
+                'path': datadir + '/' + path,
+                'patient_id': path.split('.')[0]},
+                ignore_index=True)
+    image_df.to_csv(cache_path)
+    return image_df
+
+
+def parse_s3_dicom_image_list(bucket, subdir='train', limit=None, verbose=False):
     """Get list of DICOMs from S3 bucket and parse train/test and patientId."""
     # TODO: SLOW. Not efficient. Find way not to do this in a loop.
+    # TODO: Check if this is deterministic.
     print("Retrieving image list...")
     image_df = pd.DataFrame(columns=['path', 'subdir', 'patient_id'])
     for obj in S3_RESOURCE.Bucket(name=bucket).objects.all():
@@ -98,7 +132,7 @@ def parse_training_labels(train_box_df, train_image_dirpath):
         pid = row['patientId']
         if pid not in parsed:
             parsed[pid] = {
-                'dicom_s3_key': train_image_dirpath + '/%s.dcm' % pid,
+                'dicom': train_image_dirpath + '/%s.dcm' % pid,
                 'label': row['Target'],
                 'boxes': []}
 
