@@ -146,56 +146,6 @@ def overlay_box(im, box, rgb, stroke=1):
     return im
 
 
-def get_colors_for_class_ids(class_ids):
-    """Set color for class."""
-    colors = []
-    for class_id in class_ids:
-        if class_id == 1:
-            colors.append((.941, .204, .204))
-    return colors
-
-
-def show_random_predictions(dataset, inference_config, model, number_of_images=3, verbose=1):
-    """Show some examples of ground truth vs. predictions on the validation set."""
-    fig = plt.figure(figsize=(10, 20))
-    num_imgs = 3
-    for i in range(num_imgs):
-        image_id = random.choice(dataset.image_ids)
-        print(image_id)
-        original_image, image_meta, gt_class_id, gt_bbox, gt_mask =\
-            modellib.load_image_gt(
-                dataset=dataset,
-                config=inference_config,
-                image_id=image_id,
-                augment=False,
-                augmentation=None,
-                use_mini_mask=False)
-        plt.subplot(num_imgs, 2, 2 * i + 1)
-        visualize.display_instances(
-            image=original_image,
-            boxes=gt_bbox,
-            masks=gt_mask,
-            class_ids=gt_class_id,
-            class_names=dataset.class_names,
-            colors=get_colors_for_class_ids(gt_class_id),
-            ax=fig.axes[-1])
-        plt.title('Ground Truth')
-        plt.subplot(num_imgs, 2, 2 * i + 2)
-
-        results = model.detect([original_image], verbose=verbose)
-        r = results[0]
-        visualize.display_instances(
-            image=original_image,
-            boxes=r['rois'],
-            masks=r['masks'],
-            class_ids=r['class_ids'],
-            class_names=dataset.class_names,
-            scores=r['scores'],
-            colors=get_colors_for_class_ids(r['class_ids']),
-            ax=fig.axes[-1])
-        plt.title('Prediction')
-
-
 def get_class_result(gt_class, pred_class):
     if 1 in gt_class and 1 in pred_class:
         return 'tp'
@@ -243,3 +193,22 @@ def compute_batch_metrics(dataset, model, inference_config, image_ids, verbose=F
             all_results[image_id]['overlaps'] = overlaps
 
     return all_results
+
+
+def print_rp(class_counts):
+    N = sum(train_class_counts.values())
+    pospct = (class_counts['tp'] + class_counts['fn']) / N
+    accuracy = (class_counts['tp'] + class_counts['tn']) / N
+    recall = class_counts['tp'] / (class_counts['tp'] + class_counts['fn'])
+    precision = class_counts['tp'] / (class_counts['tp'] + class_counts['fp'])
+    f1 = 2 * ((precision * recall) / (precision + recall))
+    print("Positive: %s" % pospct)
+    print("Accuracy: %s" % accuracy)
+    print("Recall: %s" % recall)
+    print("Precision: %s" % precision)
+    print("F1: %s" % f1)
+    return {'pospct': pospct,
+            'accuracy': accuracy,
+            'recall': recall,
+            'precision': precision,
+            'f1': f1}
