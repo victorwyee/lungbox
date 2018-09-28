@@ -5,9 +5,13 @@ import sys
 import numpy as np
 import cv2
 
-import ingest
-script_path = os.path.dirname(os.path.abspath(__file__))
+try:
+    script_path = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    script_path = "/projects/lungbox/src"
+    sys.path.append(script_path)
 sys.path.append(script_path + "/Mask_RCNN")
+
 from Mask_RCNN.mrcnn.utils import Dataset
 
 
