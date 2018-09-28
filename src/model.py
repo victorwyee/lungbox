@@ -25,7 +25,7 @@ class DetectorDataset(Dataset):
         for i, patient_id in enumerate(patient_ids):
             self.add_image(source='pneumonia',
                            image_id=i,
-                           path=annotation_dict[patient_id]['dicom_s3_key'],
+                           path=annotation_dict[patient_id]['dicom'],
                            annotations=annotation_dict[patient_id]['boxes'],
                            orig_height=orig_height,
                            orig_width=orig_width)
@@ -42,12 +42,11 @@ class DetectorDataset(Dataset):
         info = self.image_info[image_id]
         ds = ingest.get_s3_dcm(bucket=self.s3_bucket, file_key=info['path'])
         image = ds.pixel_array
-
-        # add extra band (4 dimensions expected by mrcnn)
-        # image = image.reshape(image.shape + (1,))
+        image = image.reshape(image.shape + (1,))
+        # NO STACKING FOR THREE DIMENSIONS
         # If grayscale. Convert to RGB for consistency.
-        if len(image.shape) != 3 or image.shape[2] != 3:
-            image = np.stack((image,) * 3, -1)
+        # if len(image.shape) != 3 or image.shape[2] != 3:
+        #     image = np.stack((image,) * 3, -1)
         return image
 
     def load_mask(self, image_id):
