@@ -38,11 +38,10 @@ class TrainingData:
         self.annotation_dict = self._retrieve_annotation_dict(self.train_box_df)
         self.image_df = self._retrieve_dicom_image_list()
 
-        # Split train/test sets
-        patient_id_subset = list(
-            self.image_df[self.image_df['subdir'] == 'train']['patient_id'])
-        id_split = utils.split_dataset(
-            ids=patient_id_subset,
+        # Split train/test sets, preserving outcome class distribution
+        id_split = utils.split_dataset_by_class(
+            annotation_dict=self.annotation_dict
+            subset_size=subset_size,
             validation_split=validation_split)
         self.patient_id_train = id_split['train_ids']
         self.patient_id_valid = id_split['valid_ids']
@@ -57,8 +56,7 @@ class TrainingData:
         elif self.data_source == 's3':
             image_df = ingest.parse_s3_dicom_image_list(
                 bucket=GlobalConfig.get('S3_BUCKET_NAME'),
-                subdir=self.subdir,
-                limit=self.subset_size)
+                subdir=self.subdir)
         return image_df
 
     def _retrieve_training_box_labels(self):

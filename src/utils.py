@@ -4,9 +4,8 @@
 import os
 import sys
 import random
+import math
 import numpy as np
-# import matplotlib
-# matplotlib.use('TkAgg')
 
 try:
     from matplotlib import pyplot as plt
@@ -14,19 +13,52 @@ try:
 except ImportError:
     _HAS_MATPLOTLIB = False
 
-script_path = os.path.dirname(os.path.abspath(__file__))
+try:
+    script_path = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    script_path = "/projects/lungbox/src"
+    sys.path.append(script_path)
 sys.path.append(script_path + "/Mask_RCNN")
+
 import Mask_RCNN.mrcnn.model as modellib
 import Mask_RCNN.mrcnn.utils as modelutils
 import Mask_RCNN.mrcnn.visualize as visualize
 
+from config import GlobalConfig
+
 
 def split_dataset(ids, validation_split=0.2):
-    """"Split dataset for training and validation"""
+    """Split dataset for training and validation."""
     random.shuffle(ids)
     split_index = int((1 - validation_split) * len(ids))
     train_ids = ids[:split_index]
     valid_ids = ids[split_index:]
+
+
+def split_dataset_by_class(annotation_dict, subset_size, validation_split):
+    """Split dataset for training and validation, preserving outcome class distribution."""
+
+    n_positive = sum(1 for v in annotation_dict.values() if v['label'] == 1)
+    n_total = len(annotation_dict)
+    p_positive = n_positive / n_total
+
+    positive_ids = [k for k, v in annotation_dict.items() if v['label'] == 1]
+    negative_ids = [k for k, v in annotation_dict.items() if v['label'] == 0]
+    random.seed(GlobalConfig.get('RANDOM_SEED'))
+    random.shuffle(positive_ids)
+    random.shuffle(negative_ids)
+
+    n_positive_subset = int(math.ceil(subset_size * p_positive))
+    n_negative_subset = int(subset_size - n_positive_subset)
+
+    # ceilings & floors to ensure that we get exactly subset_size*validation_split
+    train_pos_index = int(math.ceil(n_positive_subset*(1-validation_split)))
+    train_neg_index = int(math.floor(n_negative_subset*(1-validation_split)))
+
+    train_ids = positive_ids[:train_pos_index] + negative_ids[:train_neg_index]
+    valid_ids = positive_ids[train_pos_index:n_positive_subset] + \
+        negative_ids[train_neg_index:n_negative_subset]
+
     print('Training count: %s' % len(train_ids))
     print('Validation instance count: %s' % len(valid_ids))
     return {'train_ids': train_ids,

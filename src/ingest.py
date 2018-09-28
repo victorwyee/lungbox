@@ -60,7 +60,7 @@ def parse_local_dicom_image_list(datadir, cache=True, verbose=False):
 def parse_s3_dicom_image_list(bucket, subdir='train', limit=None, verbose=False):
     """Get list of DICOMs from S3 bucket and parse train/test and patientId."""
     # TODO: SLOW. Not efficient. Find way not to do this in a loop.
-    # TODO: Check if this is deterministic.
+    # TODO: Check if using `limit` is deterministic.
     print("Retrieving image list...")
     image_df = pd.DataFrame(columns=['path', 'subdir', 'patient_id'])
     for obj in S3_RESOURCE.Bucket(name=bucket).objects.all():
