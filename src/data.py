@@ -40,7 +40,7 @@ class TrainingData:
 
         # Split train/test sets, preserving outcome class distribution
         id_split = utils.split_dataset_by_class(
-            annotation_dict=self.annotation_dict
+            annotation_dict=self.annotation_dict,
             subset_size=subset_size,
             validation_split=validation_split)
         self.patient_id_train = id_split['train_ids']
@@ -48,9 +48,9 @@ class TrainingData:
 
     def _retrieve_dicom_image_list(self):
         if self.data_source == 'local':
-            if subdir == 'train':
+            if self.subdir == 'train':
                 datadir = GlobalConfig.get('S3_STAGE1_TRAIN_IMAGE_DIR')
-            elif subdir == 'test':
+            elif self.subdir == 'test':
                 datadir = GlobalConfig.get('S3_STAGE1_TEST_IMAGE_DIR')
             image_df = ingest.parse_local_dicom_image_list(datadir)
         elif self.data_source == 's3':
@@ -75,7 +75,7 @@ class TrainingData:
             dirpath = GlobalConfig.get('S3_STAGE1_TRAIN_IMAGE_DIR')
         annotation_dict = ingest.parse_training_labels(
             train_box_df=train_box_df,
-            train_image_dirpath=dir)
+            train_image_dirpath=dirpath)
         return annotation_dict
 
     def get_train_ids(self):

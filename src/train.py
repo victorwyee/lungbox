@@ -12,7 +12,7 @@ from imgaug import augmenters as iaa
 try:
     script_path = os.path.dirname(os.path.abspath(__file__))
 except NameError:
-    script_path = "/projects/lungbox/src/notebooks/model1_maskrcnn"
+    script_path = "/projects/lungbox/src"
     sys.path.append(script_path)
 sys.path.append(script_path + "/Mask_RCNN")
 
