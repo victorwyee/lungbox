@@ -65,7 +65,7 @@ def split_dataset_by_class(annotation_dict, subset_size, validation_split):
             'valid_ids': valid_ids}
 
 
-def find_latest_model(model_dir, prefix, inference_config):
+def find_latest_model(model_dir, prefix, inference_config, verbose=False):
     """Find path containing latest model."""
 
     dir_names = next(os.walk(model_dir))[1]
@@ -88,13 +88,18 @@ def find_latest_model(model_dir, prefix, inference_config):
         checkpoints = filter(lambda f: f.startswith(prefix), checkpoints)
         checkpoints = sorted(checkpoints)
         if not checkpoints:
-            print('No weight files in {}'.format(dir_name))
+            if verbose:
+                print('No weight files in {}'.format(dir_name))
         else:
             checkpoint = os.path.join(dir_name, checkpoints[-1])
             fps.append(checkpoint)
-    model_path = sorted(fps)[-1]
-    print('Found model {}'.format(model_path))
-    return model_path
+    if len(fps) == 0:
+        print("No weight files found.")
+        return None
+    else:
+        model_path = sorted(fps)[-1]
+        print('Found model {}'.format(model_path))
+        return model_path
 
 
 def draw(parsed_df, patient_id):
@@ -160,7 +165,6 @@ def get_class_result(gt_class, pred_class):
 def compute_batch_metrics(dataset, model, inference_config, image_ids, verbose=False):
 
     all_results = dict()
-
     for image_id in image_ids:
 
         # Load image
@@ -195,8 +199,8 @@ def compute_batch_metrics(dataset, model, inference_config, image_ids, verbose=F
     return all_results
 
 
-def print_rp(class_counts):
-    N = sum(train_class_counts.values())
+def summarize_cm(class_counts):
+    N = sum(class_counts.values())
     pospct = (class_counts['tp'] + class_counts['fn']) / N
     accuracy = (class_counts['tp'] + class_counts['tn']) / N
     recall = class_counts['tp'] / (class_counts['tp'] + class_counts['fn'])
