@@ -18,8 +18,6 @@ except NameError:
     sys.path.append(script_path)
 sys.path.append(script_path + "/Mask_RCNN")
 
-from config import GlobalConfig
-
 config = Config(connect_timeout=50, read_timeout=70)
 S3_CLIENT = boto3.client('s3', config=config)      # low-level functional API
 S3_RESOURCE = boto3.resource('s3', config=config)  # higher-level OOO API
@@ -34,9 +32,11 @@ def list_bucket_contents(bucket):
     return obj_paths
 
 
-def parse_local_dicom_image_list(datadir, cache=True, verbose=False):
-    cache_path = GlobalConfig.get('LOCAL_DICOM_IMAGE_LIST_PATH')
-    if cache and Path(cache_path).is_file():
+def parse_dicom_image_list(datadir, subdir, cache_path, verbose=False):
+    """Get list of DICOMs from a local source and parse train/test and patientId."""
+
+    # Load cached data
+    if Path(cache_path).is_file():
         print('Using cached image list: %s' % cache_path)
         image_df = pd.read_csv(cache_path)
         return image_df
@@ -51,6 +51,7 @@ def parse_local_dicom_image_list(datadir, cache=True, verbose=False):
                 print(path)
             image_df = image_df.append({
                 'path': datadir + '/' + path,
+                'subdir': subdir,
                 'patient_id': path.split('.')[0]},
                 ignore_index=True)
     image_df.to_csv(cache_path)
@@ -141,7 +142,3 @@ def parse_training_labels(train_box_df, train_image_dirpath):
             parsed[pid]['boxes'].append(extract_box(row))
 
     return parsed
-
-train_image_dirpath = 'asdf'
-pid = 1
-train_image_dirpath + '/%s.dcm' % pid
