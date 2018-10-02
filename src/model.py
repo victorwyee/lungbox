@@ -4,6 +4,7 @@ import os
 import sys
 import numpy as np
 import cv2
+import pydicom
 
 try:
     script_path = os.path.dirname(os.path.abspath(__file__))
@@ -15,11 +16,17 @@ sys.path.append(script_path + "/Mask_RCNN")
 from Mask_RCNN.mrcnn.utils import Dataset
 import ingest
 
+
 class DetectorDataset(Dataset):
     """Dataset class for training pneumonia detection on the RSNA pneumonia dataset."""
 
-    def __init__(self, patient_ids, annotation_dict, orig_height, orig_width, s3_bucket):
+    def __init__(self, patient_ids, annotation_dict, orig_height, orig_width, data_source, s3_bucket=None):
         super().__init__(self)
+        self.patient_ids = patient_ids,
+        self.annotation_dict = annotation_dict
+        self.orig_height = orig_height
+        self.orig_width = orig_width
+        self.data_source = data_source
         self.s3_bucket = s3_bucket
 
         # Add classes
@@ -44,7 +51,10 @@ class DetectorDataset(Dataset):
 
     def load_image(self, image_id):
         info = self.image_info[image_id]
-        ds = ingest.get_s3_dcm(bucket=self.s3_bucket, file_key=info['path'])
+        if self.data_source == 'local':
+            ds = pydicom.read_file(file_key=info['path'])
+        elif self.data_source == 's3':
+            ds = ingest.get_s3_dcm(bucket=self.s3_bucket, file_key=info['path'])
         image = ds.pixel_array
         image = image.reshape(image.shape + (1,))
         # NO STACKING FOR THREE DIMENSIONS
