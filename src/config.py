@@ -33,6 +33,11 @@ class GlobalConfig:
         'LOCAL_STAGE1_TEST_IMAGE_DIR': 'data/raw/stage_1_test_images',
         'LOCAL_DICOM_IMAGE_LIST_PATH': 'data/preprocessed/local_dicom_image_list.csv',
 
+        'EXAMPLE_CLASS_INFO_PATH': 'data/example/example_detailed_class_info.csv',
+        'EXAMPLE_TRAIN_BOX_PATH': 'data/example/example_train_labels.csv',
+        'EXAMPLE_STAGE1_TRAIN_IMAGE_DIR': 'data/example/stage_1_train_images',
+        'EXAMPLE_DICOM_IMAGE_LIST_PATH': 'data/example/example_dicom_image_list.csv',
+
         'MODEL_DIR': '/projects/lungbox/models',
         'S3_MODEL_DIR': 's3://lungbox/models',
         'TRAINING_DATA_MAX_SIZE': 25684
