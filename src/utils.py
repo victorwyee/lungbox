@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Utlities"""
+"""Utilities"""
 
 import os
 import sys
@@ -22,8 +22,8 @@ sys.path.append(script_path + "/Mask_RCNN")
 
 import Mask_RCNN.mrcnn.model as modellib
 import Mask_RCNN.mrcnn.utils as modelutils
-import Mask_RCNN.mrcnn.visualize as visualize
 
+import ingest
 from config import GlobalConfig
 
 
@@ -111,7 +111,7 @@ def draw(parsed_df, patient_id):
         - Available at https://www.kaggle.com/peterchang77/exploratory-data-analysis/notebook
         - Retrieved 2018-09-19
     """
-    d = get_s3_dcm(patient_id)
+    d = ingest.get_s3_dcm(patient_id)
     im = d.pixel_array
 
     # Convert from single-channel grayscale to 3-channel RGB
@@ -201,18 +201,15 @@ def compute_batch_metrics(dataset, model, inference_config, image_ids, verbose=F
 
 def summarize_cm(class_counts):
     N = sum(class_counts.values())
-    pospct = (class_counts['tp'] + class_counts['fn']) / N
     accuracy = (class_counts['tp'] + class_counts['tn']) / N
     recall = class_counts['tp'] / (class_counts['tp'] + class_counts['fn'])
     precision = class_counts['tp'] / (class_counts['tp'] + class_counts['fp'])
     f1 = 2 * ((precision * recall) / (precision + recall))
-    print("Positive: %s" % pospct)
     print("Accuracy: %s" % accuracy)
     print("Recall: %s" % recall)
     print("Precision: %s" % precision)
     print("F1: %s" % f1)
-    return {'pospct': pospct,
-            'accuracy': accuracy,
+    return {'accuracy': accuracy,
             'recall': recall,
             'precision': precision,
             'f1': f1}
