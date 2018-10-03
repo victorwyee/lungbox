@@ -104,10 +104,10 @@ def get_s3_dcm(bucket, file_key):
 
 def parse_training_labels(train_box_df, train_image_dirpath):
     """
-    Method to read a CSV file (Pandas dataframe) and parse the
-    data into the following nested dictionary:
+    Reads and parses CSV file into a pandas dataframe.
 
-      parsed = {
+    Example:
+    {
         'patientId-00': {
             'dicom': path/to/dicom/file,
             'label': either 0 or 1 for normal or pnuemonia,
@@ -118,16 +118,11 @@ def parse_training_labels(train_box_df, train_image_dirpath):
             'label': either 0 or 1 for normal or pnuemonia,
             'boxes': list of box(es)
         }, ...
-      }
-
-    References:
-    * Exploratory Data Analysis, by Peter Chang, MD.
-        - Available at https://www.kaggle.com/peterchang77/exploratory-data-analysis/notebook
-        - Retrieved 2018-09-19
+    }
     """
-    # Define lambda to extract coords in list [y, x, height, width]
+    # Define lambda to extract coords in list [x, y, width, height]
     def extract_box(row):
-        return [row['y'], row['x'], row['height'], row['width']]
+        return [row['x'], row['y'], row['width'], row['height']]
 
     parsed = {}
     for n, row in train_box_df.iterrows():
