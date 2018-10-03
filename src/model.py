@@ -51,8 +51,8 @@ class DetectorDataset(Dataset):
 
     def load_image(self, image_id):
         info = self.image_info[image_id]
-        if self.data_source == 'local':
-            ds = pydicom.read_file(file_key=info['path'])
+        if self.data_source == 'local' or self.data_source == 'example':
+            ds = pydicom.read_file(fp=info['path'])
         elif self.data_source == 's3':
             ds = ingest.get_s3_dcm(bucket=self.s3_bucket, file_key=info['path'])
         image = ds.pixel_array
