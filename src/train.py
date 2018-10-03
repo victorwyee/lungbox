@@ -2,13 +2,26 @@
 # -*- coding: utf-8 -*-
 # File: train.py
 
-"""Initial model with Mask R-CNN: Training."""
+"""
+Train a lung opacity detector on the RSNA 2018 pneumonia challenge dataset.
+Uses the official matterport's "official" implementation of Mask R-CNN.
+
+Usage:
+    python src/train.py \
+        --data_source=example \
+        --subset_size=2500 \
+        --validation_split=0.2 \
+        --epochs=100 \
+        --learning_rate=0.002 \
+        --model_dir='/projects/lungbox/models'
+"""
 
 import os
 import sys
 import time
 from imgaug import augmenters as iaa
 
+# Set up PATH
 try:
     script_path = os.path.dirname(os.path.abspath(__file__))
 except NameError:
@@ -45,40 +58,65 @@ os.environ['AWS_REGION'] = GlobalConfig.get('AWS_REGION')
 
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--subset_size', help='Number of instances to subset. Max 25684.')
-    parser.add_argument('--validation_split', help='Percentage of training data for validation. Range 0.00-0.99.')
-    parser.add_argument('--epochs', help='Number of epochs to train.')
-    parser.add_argument('--learning_rate', help='Learning rate. Default 0.001.')
+    parser = argparse.ArgumentParser(
+        description='Runs Mask R-CNN for lung opacity detection in pneumonia.')
+    parser.add_argument('--data_source', required=False,
+                        help="One of ['example', 'local', or 's3']. Requires configuration in config.py. Default 'example'.")
+    parser.add_argument('--subset_size', required=True, default=1000,
+                        help='Number of instances to subset. Max 25684. Default 1000.')
+    parser.add_argument('--validation_split', required=True, default=0.2,
+                        help='Percentage of training data for validation. Stratifies on class. Range 0.00-0.99. Default 0.2.')
+    parser.add_argument('--epochs', required=False, default=1,
+                        help='Number of epochs to train. Default 1.')
+    parser.add_argument('--learning_rate', required=False, default=0.002,
+                        help='Learning rate. Default 0.002.')
+    parser.add_argument('--use_augmentation', required=False, default=False,
+                        help='Use image augmentation. Default false.')
+    parser.add_argument('--model_dir', required=False,
+                        default=GlobalConfig.get('MODEL_DIR'),
+                        metavar="/path/to/logs/",
+                        help='Logs and checkpoints directory (default=/projects/lungbox/models)')
     args = parser.parse_args()
 
-    data = TrainingData(
-        subset_size=int(args.subset_size),
-        validation_split=float(args.validation_split))
-    learning_rate = args.learning_rate if args.learning_rate else DetectorConfig().LEARNING_RATE
+    # Set up training data
+    elapsed_start = time.perf_counter()
+    data = TrainingData(subset_size=int(args.subset_size),
+                        validation_split=float(args.validation_split))
+    elapsed_end = time.perf_counter()
+    logger.info('Data Setup Time: %ss' % round(elapsed_end - elapsed_start, 4))
 
     # Set up Mask R-CNN model
     elapsed_start = time.perf_counter()
-    model = modellib.MaskRCNN(
-        mode='training',
-        config=DetectorConfig(),
-        model_dir=GlobalConfig.get('MODEL_DIR'))
+    model = modellib.MaskRCNN(mode='training',
+                              config=DetectorConfig(),
+                              model_dir=args.model_dir)
     elapsed_end = time.perf_counter()
-    print('Setup Time: %ss' % round(elapsed_end - elapsed_start, 4))
+    logger.info('Model Setup Time: %ss' % round(elapsed_end - elapsed_start, 4))
 
-    # Add initial image augmentation params
-    augmentation = iaa.SomeOf((0, 2), [
-        # ia.Fliplr(0.5), # not recommended; human body not symmetric
-        iaa.Flipud(0.5),
-        iaa.Affine(
-            scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
-            translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)},
-            rotate=(-10, 10),  # up to 10% rotations recommended
-            shear=(-8, 8)
-        ),
-        iaa.Multiply((0.9, 1.1)),
-        iaa.GaussianBlur(sigma=(0.0, 0.5))
-    ])
+    # Add image augmentation params
+    if args.use_augmentation:
+        augmentation = iaa.SomeOf((0, 5), [
+            # iaa.Fliplr(0.5),
+
+            # crop some of the images by 0-10% of their height/width
+            iaa.Crop(percent=(0, 0.1)),
+
+            # Apply affine transformations to some of the images
+            # - scale to 90-110% of image height/width (each axis independently)
+            # - translate by -10 to +10 relative to height/width (per axis)
+            # - rotate by -10 to +10 degrees
+            # - shear by -2 to +2 degrees
+            iaa.Affine(
+                scale={"x": (0.9, 1.1), "y": (0.9, 1.1)},
+                translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)},
+                rotate=(-10, 10),
+                shear=(-2, 2)),
+
+            # Change brightness of images (90-110% of original value).
+            iaa.Multiply((0.9, 1.1))
+        ])
+    else:
+        augmentation = None
 
     # Train the model! (SLOW)
     # layers
@@ -89,9 +127,9 @@ if __name__ == '__main__':
     elapsed_start = time.perf_counter()
     model.train(train_dataset=data.get_dataset_train(),
                 val_dataset=data.get_dataset_valid(),
-                learning_rate=int(learning_rate),
+                learning_rate=float(args.learning_rate),
                 epochs=int(args.epochs),
                 layers='all',
                 augmentation=augmentation)
     elapsed_end = time.perf_counter()
-    print('Training Time: %ss' % round(elapsed_end - elapsed_start, 4))
+    logger.info('Training Time: %ss' % round(elapsed_end - elapsed_start, 4))

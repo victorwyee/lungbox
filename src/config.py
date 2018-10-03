@@ -66,18 +66,18 @@ class DetectorConfig(Config):
     """
     NAME = 'pneumonia'
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 2             # batch size = 1*2 = 2
+    IMAGES_PER_GPU = 2                 # batch size = 1*2 = 2
     TRAIN_SAMPLE_SIZE = 2500*0.8
     VALID_SAMPLE_SIZE = 2500*0.2
     BATCH_SIZE = GPU_COUNT*IMAGES_PER_GPU
     BACKBONE = 'resnet101'
-    NUM_CLASSES = 2                # background + 1 pneumonia classes
-    MAX_GT_INSTANCES = 4           # up to 4 bounding boxes per image
-    IMAGE_RESIZE_MODE = 'none'     # No resizing or padding. Return the image unchanged.
-    IMAGE_MIN_DIM = 1024           # preserve original 1024 dimension
-    IMAGE_MAX_DIM = 1024           # preserve original 1024 dimension
-    IMAGE_CHANNEL_COUNT = 1        # grayscale
-    MEAN_PIXEL = np.array([127.5]) # mean pixel intensity
+    NUM_CLASSES = 2                    # background + 1 pneumonia classes
+    MAX_GT_INSTANCES = 4               # up to 4 bounding boxes per image
+    IMAGE_RESIZE_MODE = 'none'         # No resizing or padding. Return the image unchanged.
+    IMAGE_MIN_DIM = 1024               # preserve original 1024 dimension
+    IMAGE_MAX_DIM = 1024               # preserve original 1024 dimension
+    IMAGE_CHANNEL_COUNT = 1            # grayscale
+    MEAN_PIXEL = np.array([127.5])     # mean pixel intensity
 
     STEPS_PER_EPOCH = TRAIN_SAMPLE_SIZE // BATCH_SIZE
     VALIDATION_STEPS = VALID_SAMPLE_SIZE // BATCH_SIZE
@@ -91,27 +91,27 @@ class DetectorConfig(Config):
     RPN_ANCHOR_SCALES = (8, 16, 32, 64, 128)
 
     # Non-max suppression threshold to filter RPN proposals.
-    RPN_NMS_THRESHOLD = 0.9        # default: 0.7; increase to generate more proposals.
+    RPN_NMS_THRESHOLD = 0.9            # default: 0.7; increase to generate more proposals.
 
     # Training ROIs kept after non-maximum suppression
     POST_NMS_ROIS_TRAINING = 3200
 
     # Number of ROIs per image to feed to classifier/mask heads
     TRAIN_ROIS_PER_IMAGE = 256
-    ROI_POSITIVE_RATIO = 0.33      # default: 0.33
+    ROI_POSITIVE_RATIO = 0.33          # default: 0.33
 
     # Learning rate and momentum
     # The Mask RCNN paper uses lr=0.02, but on TensorFlow it causes
     # weights to explode. Likely due to differences in optimizer
     # implementation.
     NUM_EPOCHS = 50
-    LEARNING_RATE = 0.002          # default: 0.001
-    LEARNING_MOMENTUM = 0.9        # default: 0.9
+    LEARNING_RATE = 0.002              # default: 0.001
+    LEARNING_MOMENTUM = 0.9            # default: 0.9
 
 
 class InferenceConfig(DetectorConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
-    DETECTION_MIN_CONFIDENCE = 0.5 # positive class confidence threshold
-    DETECTION_MAX_INSTANCES = 4    # up to 4 true boxes per image
+    DETECTION_MIN_CONFIDENCE = 0.8     # positive class confidence threshold
+    DETECTION_MAX_INSTANCES = 4        # up to 4 true boxes per image
     DETECTION_NMS_THRESHOLD = 0.1
