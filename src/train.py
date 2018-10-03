@@ -16,6 +16,25 @@ except NameError:
     sys.path.append(script_path)
 sys.path.append(script_path + "/Mask_RCNN")
 
+# Set non-display matplotlib backend for scripting
+# Avoids "backend not available" failure.
+# Must be imported before any other imports that use matplotlib
+if __name__ == '__main__':
+    import matplotlib
+    # Agg backend runs without a display
+    matplotlib.use('Agg')
+    # import matplotlib.pyplot as plt
+
+# Set up logging
+import logging
+import logging.config
+import yaml
+with open('config/logging.yml', 'rt') as f:
+    config = yaml.safe_load(f.read())
+    logging.config.dictConfig(config)
+    logger = logging.getLogger('__name__')
+
+# Import modeling utils
 import Mask_RCNN.mrcnn.model as modellib
 from config import GlobalConfig
 from config import DetectorConfig
