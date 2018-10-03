@@ -18,10 +18,6 @@ except NameError:
     sys.path.append(script_path)
 sys.path.append(script_path + "/Mask_RCNN")
 
-config = Config(connect_timeout=50, read_timeout=70)
-S3_CLIENT = boto3.client('s3', config=config)      # low-level functional API
-S3_RESOURCE = boto3.resource('s3', config=config)  # higher-level OOO API
-
 
 def list_bucket_contents(bucket):
     """List all contents from all buckets (using default configuration)."""
@@ -64,7 +60,9 @@ def parse_s3_dicom_image_list(bucket, subdir='train', limit=None, verbose=False)
     # TODO: Check if using `limit` is deterministic.
     print("Retrieving image list...")
     image_df = pd.DataFrame(columns=['path', 'subdir', 'patient_id'])
-    for obj in S3_RESOURCE.Bucket(name=bucket).objects.all():
+    s3_config = Config(connect_timeout=50, read_timeout=70)
+    s3_resource = boto3.resource('s3', config=s3_config)  # higher-level OOO API
+    for obj in s3_resource.Bucket(name=bucket).objects.all():
         path = os.path.join(obj.bucket_name, obj.key)
         if path.endswith('.dcm'):
             if verbose:
@@ -85,7 +83,9 @@ def parse_s3_dicom_image_list(bucket, subdir='train', limit=None, verbose=False)
 def read_s3_df(bucket, file_key):
     """Read CSV from S3 and return a pandas dataframe."""
     try:
-        obj = S3_CLIENT.get_object(Bucket=bucket, Key=file_key)
+        s3_config = Config(connect_timeout=50, read_timeout=70)
+        s3_client = boto3.client('s3', config=s3_config)  # low-level functional API
+        obj = s3_client.get_object(Bucket=bucket, Key=file_key)
         return pd.read_csv(obj['Body'])
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
@@ -96,7 +96,9 @@ def read_s3_df(bucket, file_key):
 
 def get_s3_dcm(bucket, file_key):
     """Read DICOM from S3"""
-    obj = S3_CLIENT.get_object(Bucket=bucket, Key=file_key)
+    s3_config = Config(connect_timeout=50, read_timeout=70)
+    s3_client = boto3.client('s3', config=s3_config)  # low-level functional API
+    obj = s3_client.get_object(Bucket=bucket, Key=file_key)
     return pydicom.read_file(BytesIO(obj['Body'].read()))
 
 
