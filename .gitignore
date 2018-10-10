@@ -1,5 +1,9 @@
 .DS_Store
-data/
+data/raw
+data/preprocessed
+data/processed
+models/
+.streamlit/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

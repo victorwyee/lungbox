@@ -1,0 +1,17 @@
+,path,subdir,patient_id
+0,data/example/stage_1_train_images/00f08de1-517e-4652-a04f-d1dc9ee48593.dcm,train,00f08de1-517e-4652-a04f-d1dc9ee48593
+1,data/example/stage_1_train_images/00704310-78a8-4b38-8475-49f4573b2dbb.dcm,train,00704310-78a8-4b38-8475-49f4573b2dbb
+2,data/example/stage_1_train_images/00c0b293-48e7-4e16-ac76-9269ba535a62.dcm,train,00c0b293-48e7-4e16-ac76-9269ba535a62
+3,data/example/stage_1_train_images/00a85be6-6eb0-421d-8acf-ff2dc0007e8a.dcm,train,00a85be6-6eb0-421d-8acf-ff2dc0007e8a
+4,data/example/stage_1_train_images/0004cfab-14fd-4e49-80ba-63a80b6bddd6.dcm,train,0004cfab-14fd-4e49-80ba-63a80b6bddd6
+5,data/example/stage_1_train_images/00322d4d-1c29-4943-afc9-b6754be640eb.dcm,train,00322d4d-1c29-4943-afc9-b6754be640eb
+6,data/example/stage_1_train_images/003d8fa0-6bf1-40ed-b54c-ac657f8495c5.dcm,train,003d8fa0-6bf1-40ed-b54c-ac657f8495c5
+7,data/example/stage_1_train_images/00436515-870c-4b36-a041-de91049b9ab4.dcm,train,00436515-870c-4b36-a041-de91049b9ab4
+8,data/example/stage_1_train_images/00aecb01-a116-45a2-956c-08d2fa55433f.dcm,train,00aecb01-a116-45a2-956c-08d2fa55433f
+9,data/example/stage_1_train_images/009482dc-3db5-48d4-8580-5c89c4f01334.dcm,train,009482dc-3db5-48d4-8580-5c89c4f01334
+10,data/example/stage_1_train_images/008c19e8-a820-403a-930a-bc74a4053664.dcm,train,008c19e8-a820-403a-930a-bc74a4053664
+11,data/example/stage_1_train_images/006cec2e-6ce2-4549-bffa-eadfcd1e9970.dcm,train,006cec2e-6ce2-4549-bffa-eadfcd1e9970
+12,data/example/stage_1_train_images/00d7c36e-3cdf-4df6-ac03-6c30cdc8e85b.dcm,train,00d7c36e-3cdf-4df6-ac03-6c30cdc8e85b
+13,data/example/stage_1_train_images/009eb222-eabc-4150-8121-d5a6d06b8ebf.dcm,train,009eb222-eabc-4150-8121-d5a6d06b8ebf
+14,data/example/stage_1_train_images/00569f44-917d-4c86-a842-81832af98c30.dcm,train,00569f44-917d-4c86-a842-81832af98c30
+15,data/example/stage_1_train_images/00313ee0-9eaa-42f4-b0ab-c148ed3241cd.dcm,train,00313ee0-9eaa-42f4-b0ab-c148ed3241cd
