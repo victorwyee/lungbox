@@ -33,6 +33,10 @@ def split_dataset(ids, validation_split=0.2):
     split_index = int((1 - validation_split) * len(ids))
     train_ids = ids[:split_index]
     valid_ids = ids[split_index:]
+    print('Training count: %s' % len(train_ids))
+    print('Validation instance count: %s' % len(valid_ids))
+    return {'train_ids': train_ids,
+            'valid_ids': valid_ids}
 
 
 def split_dataset_by_class(annotation_dict, subset_size, validation_split):
@@ -122,8 +126,8 @@ def draw(parsed_df, patient_id):
         rgb = np.floor(np.random.rand(3) * 256).astype('int')
         im = overlay_box(im=im, box=box, rgb=rgb, stroke=6)
 
-    pylab.imshow(im, cmap=pylab.cm.gist_gray)
-    pylab.axis('off')
+    plt.imshow(im, cmap=plt.cm.gist_gray)
+    plt.axis('off')
 
 
 def overlay_box(im, box, rgb, stroke=1):
@@ -162,39 +166,49 @@ def get_class_result(gt_class, pred_class):
         return 'tn'
 
 
-def compute_batch_metrics(dataset, model, inference_config, image_ids, verbose=False):
+def compute_batch_metrics(model, dataset, inference_config, image_ids, verbose=False):
 
     all_results = dict()
     for image_id in image_ids:
-
-        # Load image
-        image, image_meta, gt_class_id, gt_bbox, gt_mask =\
+        print("Processing image id: %s" % image_id)
+        all_results[image_id] = dict()
+        image, image_meta, gt_class_ids, gt_boxes, gt_masks =\
             modellib.load_image_gt(dataset, inference_config,
                                    image_id=image_id, use_mini_mask=False)
+        all_results[image_id]['gt_class_ids'] = gt_class_ids
+        all_results[image_id]['gt_boxes'] = gt_boxes
+        all_results[image_id]['gt_masks'] = gt_masks
 
         # Run object detection
-        results = model.detect([image], verbose=verbose)
-        r = results[0]
-
-        # Commute metrics
-        all_results[image_id] = dict()
-        class_result = get_class_result(
-            gt_class=gt_class_id,
-            pred_class=r['class_ids'])
+        r = model.detect([image], verbose=False)[0]
+        class_result = get_class_result(gt_class=gt_class_ids, pred_class=r['class_ids'])
         all_results[image_id]['class_result'] = class_result
+        all_results[image_id]['pred_class_ids'] = r['class_ids']
+        all_results[image_id]['pred_boxes'] = r['rois']
+        all_results[image_id]['pred_scores'] = r['scores']
+        all_results[image_id]['pred_masks'] = r['masks']
 
-        if class_result == 'tp':
-            ap, precisions, recalls, overlaps = modelutils.compute_ap(
-                gt_bbox, gt_class_id, gt_mask,
-                r['rois'], r['class_ids'], r['scores'], r['masks'],
-                iou_threshold=0.5)
-            all_results[image_id]['ap'] = ap
-            all_results[image_id]['precisions'] = precisions
-            all_results[image_id]['recalls'] = recalls
-            all_results[image_id]['gt_bbox'] = gt_bbox
-            all_results[image_id]['pred_bbox'] = r['rois']
-            all_results[image_id]['pred_score'] = r['scores']
+        print("Ground Truth Classes: %s" % gt_class_ids)
+        print("Predicted Classes: %s" % r['class_ids'])
+        print("Predicted Scores: %s" % r['scores'])
+        print("Class Result: %s" % class_result)
+
+        if gt_masks.size > 0 and r['masks'].size > 0:
+            gt_match, pred_match, overlaps = modelutils.compute_matches(
+                gt_boxes=gt_boxes, gt_class_ids=gt_class_ids, gt_masks=gt_masks,
+                pred_boxes=r['rois'], pred_class_ids=r['class_ids'],
+                pred_scores=r['scores'], pred_masks=r['masks'],
+                iou_threshold=0.5, score_threshold=0.0)
+            all_results[image_id]['gt_match'] = gt_match
+            all_results[image_id]['pred_match'] = pred_match
             all_results[image_id]['overlaps'] = overlaps
+        elif gt_masks.size == 0 and r['masks'].size > 0:
+            all_results[image_id]['overlaps'] = np.zeros(shape=(r['class_ids'].shape[0], 1))
+        else:
+            all_results[image_id]['overlaps'] = np.array([])
+
+        print("Overlap: \n%s" % all_results[image_id]['overlaps'])
+        print("\n")
 
     return all_results
 

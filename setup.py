@@ -33,7 +33,7 @@ REQUIRED_PACKAGES = [
     'h5py==2.8.0',
     'imgaug==0.2.6',
     'IPython[all]',
-    'Keras==2.2.2',
+    'Keras==2.1.3',            # working multi-GPU training
     'Keras-Applications==1.0.4',
     'Keras-Preprocessing==1.0.2',
     'matplotlib==3.0.0',

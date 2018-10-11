@@ -123,7 +123,7 @@ class DetectorDataset(Dataset):
 
     def __init__(self, patient_ids, annotation_dict, orig_height, orig_width, data_source, s3_bucket=None):
         super().__init__(self)
-        self.patient_ids = patient_ids,
+        self.patient_ids = patient_ids
         self.annotation_dict = annotation_dict
         self.orig_height = orig_height
         self.orig_width = orig_width

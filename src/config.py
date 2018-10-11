@@ -40,6 +40,7 @@ class GlobalConfig:
 
         'MODEL_DIR': '/projects/lungbox/models',
         'S3_MODEL_DIR': 's3://lungbox/models',
+        'LATEST_MODEL': 'pneumonia20181003T1228/mask_rcnn_pneumonia_0050.h5',
         'TRAINING_DATA_MAX_SIZE': 25684
     }
     __setters = ['AWS_ACCESS_KEY']
@@ -112,6 +113,6 @@ class DetectorConfig(Config):
 class InferenceConfig(DetectorConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
-    DETECTION_MIN_CONFIDENCE = 0.8     # positive class confidence threshold
+    DETECTION_MIN_CONFIDENCE = 0.975   # positive class confidence threshold
     DETECTION_MAX_INSTANCES = 4        # up to 4 true boxes per image
     DETECTION_NMS_THRESHOLD = 0.1

@@ -15,21 +15,27 @@ python setup.py install
 
 ```
 # max training set size = 25684
-python src/notebooks/model1_maskrcnn/train.py \
-    --subset_size=1000 \
-    --validation_split=0.2 \
-    --epochs=1 2>&1 | tee logs/$(date +%Y%m%d%H%M)_train.log
+python src/train.py \
+  --data_source=example \
+  --subset_size=2500 \
+  --validation_split=0.2 \
+  --epochs=100 \
+  --learning_rate=0.002 \
+  --model_dir='/projects/lungbox/models' 2>&1 | tee logs/$(date +%Y%m%d%H%M)_train.log
 ```
 
-At this time, all data is hosted on S3. Example data will be added shortly.
+### Inference
 
-## Inference
-
-In progress.
+```
+python src/infer.py \
+      --image_path=/projects/lungbox/data/example/stage_1_train_images/00a85be6-6eb0-421d-8acf-ff2dc0007e8a.dcm \
+      --h5_path=/projects/lungbox/models/pneumonia20181003T1228/mask_rcnn_pneumonia_0050.h5
+      --model_dir='/projects/lungbox/models'
+```
 
 # Example Results
 
-In progress.
+
 
 # References
   * Mask R-CNN, retrieved 2018-09-19
