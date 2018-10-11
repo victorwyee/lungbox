@@ -1,6 +1,12 @@
 # lungbox: Localizing evidence of pneumonia in chest X-rays.
 
-A project to localize areas of lung opacities, to predict pneumonia, from chest X-rays.
+## Overview
+
+Pneumonia kills millions worldwide, in both developing and developed countries. Chest X-rays are commonly used to diagnose pneumonia. However, limited access to radiologists, fast turn-around times required of radiologists, and challenges in interpreting chest X-rays limit the efficacy of these X-rays in triaging patients.
+
+This project is a step toward making chest X-ray interpretation faster, by automating the detection and localization of visual evidence of pneumonia from chest X-rays.
+
+https://docs.google.com/presentation/d/1_z2aPasOguu1kZyQtjgMY54DRGjCleBz5f6p3x5RmaU/edit?usp=sharing
 
 # Setup
 
@@ -33,8 +39,12 @@ python src/infer.py \
       --model_dir='/projects/lungbox/models'
 ```
 
-# Example Results
+## Results
 
+### Example Predictions
+
+<img src="https://github.com/victorwyee/lungbox/raw/master/notebooks/sample_images/gt-vs-pred_09326eb7-f4cb-4d8f-83c6-8ba7fb8b5ac7.png" width=400px><img src="https://github.com/victorwyee/lungbox/raw/master/notebooks/sample_images/gt-vs-pred_0b2057bc-4c6d-4c90-8975-94c02392e460.png" width=400px>
+<img src="https://github.com/victorwyee/lungbox/raw/master/notebooks/sample_images/gt-vs-pred_3e07be0a-9693-4f9c-9295-9e72b3e2a872.png" width=400px><img src="https://github.com/victorwyee/lungbox/raw/master/notebooks/sample_images/gt-vs-pred_b17cb86b-e90c-4a31-926a-2e5b022c6275.png" width=400px>
 
 
 # References
