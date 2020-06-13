@@ -20,23 +20,36 @@ python setup.py install
 ## Train
 
 ```
-# max training set size = 25684
+# Create virtual environment
+conda create -n lungbox python=3.8
+conda install tensorflow==1.10.0
+python setup.py install
+
+# Fetch Mask R-CNN 
+git submodule update --init
+
+
+# Create output directories
+mkdir logs/
+mkdir -p output/models
+
+# Run training
 python src/train.py \
   --data_source=example \
   --subset_size=2500 \
   --validation_split=0.2 \
   --epochs=100 \
   --learning_rate=0.002 \
-  --model_dir='/projects/lungbox/models' 2>&1 | tee logs/$(date +%Y%m%d%H%M)_train.log
+  --model_dir='output/models' 2>&1 | tee logs/$(date +%Y%m%d%H%M)_train.log
 ```
 
 ### Inference
 
 ```
 python src/infer.py \
-      --image_path=/projects/lungbox/data/example/stage_1_train_images/00a85be6-6eb0-421d-8acf-ff2dc0007e8a.dcm \
-      --h5_path=/projects/lungbox/models/pneumonia20181003T1228/mask_rcnn_pneumonia_0050.h5
-      --model_dir='/projects/lungbox/models'
+      --image_path=data/example/stage_1_train_images/00a85be6-6eb0-421d-8acf-ff2dc0007e8a.dcm \
+      --h5_path=output/models/pneumonia20181003T1228/mask_rcnn_pneumonia_0050.h5
+      --model_dir='output/models'
 ```
 
 ## Results

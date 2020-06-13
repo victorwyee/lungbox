@@ -23,32 +23,14 @@ this_dirpath = path.abspath(path.dirname(__file__))
 with open(path.join(this_dirpath, 'README.md'), 'rb') as f:
     long_description = f.read().decode('utf-8')
 
+def _parse_requirements(fpath):
+    with open(fpath) as f:
+        return f.read().splitlines()
 
-REQUIRED_PACKAGES = [
-    'atlas==0.27.0',
-    'boto3==1.7.82',
-    'botocore==1.10.84',
-    'configs==3.0.3',
-    'cython==0.28.4',
-    'h5py==2.8.0',
-    'imgaug==0.2.6',
-    'IPython[all]',
-    'Keras==2.1.3',            # working multi-GPU training
-    'Keras-Applications==1.0.4',
-    'Keras-Preprocessing==1.0.2',
-    'matplotlib==3.0.0',
-    'numpy==1.14.5',
-    'opencv-python==3.4.3.18',
-    'pandas==0.23.4',
-    'Pillow==5.2.0',
-    'pydicom==1.1.0',
-    'scikit-image==0.13',      # avoid antialiasing warnings in 0.14, enough functionality
-    'scipy==1.1.0',
-    'tensorflow==1.10.0',
-    'tensorflow-gpu==1.10.0',
-    'tensorboard==1.10.0',
-    'tornado==4.5.3'           # allows async within async
-]
+EXTRA_PACKAGES = {
+    "tf": ["tensorflow==1.15.2"],
+    "tf_gpu": ["tensorflow-gpu==1.15.2"],
+}
 
 setup(
     name='lungbox',
@@ -60,6 +42,7 @@ setup(
     description='A bounding box predictor for pneumonia from chest x-rays',
     long_description=long_description,
     python_requires='>=3.6',
-    install_requires=REQUIRED_PACKAGES,
+    install_requires=_parse_requirements('requirements.txt'),
+    extras_require=EXTRA_PACKAGES,
     tests_require=['flake8', 'scikit-image'],
 )
